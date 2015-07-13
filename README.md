@@ -53,8 +53,8 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 - Multi-page apps are not supported and known to be broken on Android (and Amazon Fire-OS).
 - Using web workers is currently not supported and known to be broken on Android (and Amazon Fire-OS).
-- Triggers have only been tested on iOS, known to be broken on Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) and Amazon Fire-OS.
-- INSERT statement that affects multiple rows (due to SELECT cause or using triggers, for example) does not report proper rowsAffected on Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) or Amazon Fire-OS.
+- Triggers have only been tested on iOS, known to be broken on ~~Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) and~~ Amazon Fire-OS.
+- INSERT statement that affects multiple rows (due to SELECT cause or using triggers, for example) does not report proper rowsAffected on ~~Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) or~~ Amazon Fire-OS.
 - On Windows "Universal" (8.1), rowsAffected can be wrong when there are multiple levels of nesting of INSERT statements.
 - Memory issue observed when adding a large number of records on Android and Amazon Fire-OS, due to JSON implementation
 - A stability issue was reported on the iOS version when in use together with [SockJS](http://sockjs.org/) client such as [pusher-js](https://github.com/pusher/pusher-js) at the same time. The workaround is to call sqlite functions and [SockJS](http://sockjs.org/) client functions in separate ticks (using setTimeout with 0 timeout).
@@ -77,7 +77,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 ## Limited support (testing needed)
 
 - UNICODE paragraph separator (`\u2029`)
-- Database triggers as described above - known to be broken for Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) and Amazon Fire-OS
+- Database triggers as described above - known to be broken for ~~Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) and~~ Amazon Fire-OS
 - UNICODE characters not fully tested in the Windows "Universal" (8.1) version
 - JOIN needs to be tested more.
  
@@ -150,13 +150,15 @@ db = sqlitePlugin.openDatabase({name: "my.db", location: 2, createFromLocation: 
 
 ### Android sqlite implementation
 
-By default, this plugin uses [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector), which is lightweight  and should be more efficient than the built-in Android database classes. To use the built-in Android database classes instead:
+~~By default,~~ this plugin uses [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector), which is lightweight  and should be more efficient than the built-in Android database classes. *IGNORED:* ~~To use the built-in Android database classes instead:~~
 
 ```js
 var db = window.sqlitePlugin.openDatabase({name: "my.db", androidDatabaseImplementation: 2});
 ```
 
 ### Workaround for Android db locking issue
+
+**CURRENTLY NON-FUNCTIONAL AND IGNORED:**
 
 [Issue #193](https://github.com/litehelpers/Cordova-sqlite-storage/issues/193) was reported (as observed by several app developers) that on some newer versions of the Android database classes, if the app is stopped or aborted without closing the database then:
 - (sometimes) there is an unexpected database lock

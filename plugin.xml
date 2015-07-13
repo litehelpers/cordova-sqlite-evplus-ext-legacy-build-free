@@ -31,7 +31,6 @@
         </config-file>
 
         <source-file src="src/android/io/liteglue/SQLitePlugin.java" target-dir="src/io/liteglue"/>
-        <source-file src="src/android/io/liteglue/SQLiteAndroidDatabase.java" target-dir="src/io/liteglue"/>
 
         <!-- Android-sqlite-connector: -->
         <source-file src="src/external/sqlite-native-driver.jar" target-dir="libs"/>

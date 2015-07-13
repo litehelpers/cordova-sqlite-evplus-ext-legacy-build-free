@@ -207,7 +207,7 @@ public class SQLitePlugin extends CordovaPlugin {
      *
      * @param dbName   The name of the database file
      */
-    private SQLiteAndroidDatabase openDatabase(String dbname, boolean createFromAssets, CallbackContext cbc, boolean old_impl) throws Exception {
+    private SQLiteDatabaseAccess openDatabase(String dbname, boolean createFromAssets, CallbackContext cbc, boolean old_impl_ignored) throws Exception {
         try {
             // ASSUMPTION: no db (connection/handle) is already stored in the map
             // [should be true according to the code in DBRunner.run()]
@@ -222,7 +222,7 @@ public class SQLitePlugin extends CordovaPlugin {
 
             Log.v("info", "Open sqlite db: " + dbfile.getAbsolutePath());
 
-            SQLiteAndroidDatabase mydb = old_impl ? new SQLiteAndroidDatabase() : new SQLiteDatabaseNDK();
+            SQLiteDatabaseAccess mydb = new SQLiteDatabaseAccess();
             mydb.open(dbfile);
 
             if (cbc != null) // XXX Android locking/closing BUG workaround
@@ -316,7 +316,7 @@ public class SQLitePlugin extends CordovaPlugin {
         DBRunner r = dbrmap.get(dbname);
 
         if (r != null) {
-            SQLiteAndroidDatabase mydb = r.mydb;
+            SQLiteDatabaseAccess mydb = r.mydb;
 
             if (mydb != null)
                 mydb.closeDatabaseNow();
@@ -363,8 +363,9 @@ public class SQLitePlugin extends CordovaPlugin {
     }
 
     // NOTE: class hierarchy is ugly, done to reduce number of modules for manual installation.
-    // FUTURE TBD SQLiteDatabaseNDK class belongs in its own module.
-    class SQLiteDatabaseNDK extends SQLiteAndroidDatabase {
+    // ~~FUTURE TBD SQLiteDatabaseNDK class belongs in its own module.~~
+    // XXX TBD check if class members can be combined with the rest of SQLitePlugin class again:
+    class SQLiteDatabaseAccess {
       SQLiteConnection mydb;
 
       /**
@@ -372,7 +373,7 @@ public class SQLitePlugin extends CordovaPlugin {
        *
        * @param dbFile   The database File specification
        */
-      @Override
+      //@Override
       void open(File dbFile) throws Exception {
         mydb = connector.newSQLiteConnection(dbFile.getAbsolutePath(),
           SQLiteOpenFlags.READWRITE | SQLiteOpenFlags.CREATE);
@@ -381,7 +382,7 @@ public class SQLitePlugin extends CordovaPlugin {
       /**
        * Close a database (in the current thread).
        */
-      @Override
+      //@Override
       void closeDatabaseNow() {
         try {
           if (mydb != null)
@@ -394,7 +395,7 @@ public class SQLitePlugin extends CordovaPlugin {
       /**
        * Ignore Android bug workaround for NDK version
        */
-      @Override
+      //@Override
       void bugWorkaround() { }
 
       /**
@@ -406,7 +407,7 @@ public class SQLitePlugin extends CordovaPlugin {
        * @param queryIDs   Array of query ids
        * @param cbc        Callback context from Cordova API
        */
-      @Override
+      //@Override
       void executeSqlBatch( String[] queryarr, JSONArray[] jsonparams,
                             String[] queryIDs, CallbackContext cbc) {
 
@@ -585,13 +586,15 @@ public class SQLitePlugin extends CordovaPlugin {
         final BlockingQueue<DBQuery> q;
         final CallbackContext openCbc;
 
-        SQLiteAndroidDatabase mydb;
+        SQLiteDatabaseAccess mydb;
 
         DBRunner(final String dbname, JSONObject options, CallbackContext cbc) {
             this.dbname = dbname;
             this.createFromAssets = options.has("createFromResource");
-            this.oldImpl = options.has("androidOldDatabaseImplementation");
-            Log.v(SQLitePlugin.class.getSimpleName(), "Android db implementation: " + (oldImpl ? "OLD" : "sqlite4java (NDK)"));
+            // XXX currently ignored:
+            //this.oldImpl = options.has("androidOldDatabaseImplementation");
+            //Log.v(SQLitePlugin.class.getSimpleName(), "Android db implementation: " + (oldImpl ? "OLD" : "sqlite4java (NDK)"));
+            // XXX currently non-functional:
             this.bugWorkaround = this.oldImpl && options.has("androidBugWorkaround");
             if (this.bugWorkaround)
                 Log.v(SQLitePlugin.class.getSimpleName(), "Android db closing/locking workaround applied");

@@ -175,6 +175,7 @@
       opensuccesscb = (function(_this) {
         return function() {
           var txLock;
+          console.log('OPEN database: ' + _this.dbname + ' OK');
           if (!_this.openDBs[_this.dbname]) {
             console.log('database was closed during open operation');
           }
@@ -356,9 +357,8 @@
   };
 
   SQLitePluginTransaction.prototype.run = function() {
-    var batchExecutes, handlerFor, i, mycb, mycbmap, request, tropts, tx, txFailure, waiting;
+    var batchExecutes, handlerFor, tx, txFailure, waiting;
     txFailure = null;
-    tropts = [];
     batchExecutes = this.executes;
     waiting = batchExecutes.length;
     this.executes = [];
@@ -389,7 +389,13 @@
         }
       };
     };
+    this.run_batch(batchExecutes, handlerFor);
+  };
+
+  SQLitePluginTransaction.prototype.run_batch = function(batchExecutes, handlerFor) {
+    var i, mycb, mycbmap, request, tropts;
     i = 0;
+    tropts = [];
     mycbmap = {};
     while (i < batchExecutes.length) {
       request = batchExecutes[i];
@@ -405,9 +411,10 @@
       i++;
     }
     mycb = function(result) {
-      var last, q, r, res, type, _i;
-      last = result.length - 1;
-      for (i = _i = 0; 0 <= last ? _i <= last : _i >= last; i = 0 <= last ? ++_i : --_i) {
+      var q, r, res, reslength, type;
+      i = 0;
+      reslength = result.length;
+      while (i < reslength) {
         r = result[i];
         type = r.type;
         res = r.result;
@@ -417,6 +424,7 @@
             q[type](res);
           }
         }
+        ++i;
       }
     };
     cordova.exec(mycb, null, "SQLitePlugin", "backgroundExecuteSqlBatch", [

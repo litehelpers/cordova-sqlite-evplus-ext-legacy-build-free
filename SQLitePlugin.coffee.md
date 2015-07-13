@@ -212,7 +212,7 @@
 
         opensuccesscb = =>
           # NOTE: the db state is NOT stored (in @openDBs) if the db was closed or deleted.
-          # console.log 'OPEN database: ' + @dbname + ' succeeded'
+          console.log 'OPEN database: ' + @dbname + ' OK'
 
           #if !@openDBs[@dbname] then call open error cb, and abort pending tx if any
           if !@openDBs[@dbname]
@@ -388,13 +388,14 @@
       return
 
     SQLitePluginTransaction::run = ->
+      # persist for handlerFor callbacks:
       txFailure = null
-
-      tropts = []
+      # sql statements from queue:
       batchExecutes = @executes
       waiting = batchExecutes.length
       @executes = []
-      tx = this
+      # my tx object [this]
+      tx = @
 
       handlerFor = (index, didSucceed) ->
         (response) ->
@@ -419,8 +420,14 @@
 
           return
 
+      @run_batch(batchExecutes, handlerFor)
+      return
+
+    SQLitePluginTransaction::run_batch = (batchExecutes, handlerFor) ->
+
       i = 0
 
+      tropts = []
       mycbmap = {}
 
       while i < batchExecutes.length
@@ -440,8 +447,9 @@
       mycb = (result) ->
         #console.log "mycb result #{JSON.stringify result}"
 
-        last = result.length-1
-        for i in [0..last]
+        i = 0
+        reslength = result.length
+        while i < reslength
           r = result[i]
           type = r.type
           # NOTE: r.qid can be ignored
@@ -452,6 +460,8 @@
           if q
             if q[type]
               q[type] res
+
+          ++i
 
         return
 

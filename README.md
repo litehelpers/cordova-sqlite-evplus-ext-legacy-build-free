@@ -1,8 +1,8 @@
-# Cordova/PhoneGap sqlite storage (new common version ~~with limited functionality~~)
+# Cordova/PhoneGap sqlite storage (common version ~~with limited functionality~~)
  
-Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, Windows "Universal" (8.1), and Amazon Fire-OS with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
+Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, Windows "Universal" (8.1), ~~and Amazon Fire-OS~~ with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
 
-License for Android, Windows "Universal" (8.1), and Amazon Fire-OS versions: MIT or Apache 2.0
+License for Android, Windows "Universal" (8.1), ~~and Amazon Fire-OS~~ versions: MIT or Apache 2.0
 
 License for iOS version: MIT only
 
@@ -30,7 +30,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 - The test suite is completely ported to Jasmine (2.2.0) and was used to verify the functionality of the new Windows version
 - [SQLCipher](https://www.zetetic.net/sqlcipher/) for Windows (8.1) in addition to Android & iOS is now supported by [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter)
 - New `openDatabase` and `deleteDatabase` `location` option to select database location (iOS *only*) and disable iCloud backup
-- Pre-populated databases support for Android, iOS, and Amazon Fire-OS is now integrated, usage described below
+- Pre-populated databases support for Android, iOS, ~~and Amazon Fire-OS~~ is now integrated, usage described below
 - Fixes to work with PouchDB by [@nolanlawson](https://github.com/nolanlawson)
 
 ## Highlights
@@ -51,12 +51,11 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 ## Known issues
 
-- Multi-page apps are not supported and known to be broken on Android (and Amazon Fire-OS).
-- Using web workers is currently not supported and known to be broken on Android (and Amazon Fire-OS).
-- Triggers have only been tested on iOS, known to be broken on ~~Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) and~~ Amazon Fire-OS.
-- INSERT statement that affects multiple rows (due to SELECT cause or using triggers, for example) does not report proper rowsAffected on ~~Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) or~~ Amazon Fire-OS.
+- Multi-page apps are not supported and known to be broken on Android ~~(and Amazon Fire-OS)~~.
+- Using web workers is currently not supported and known to be broken on Android ~~(and Amazon Fire-OS)~~.
+- ~~INSERT statement that affects multiple rows (due to SELECT cause or using triggers, for example) does not report proper rowsAffected on Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) or Amazon Fire-OS~~.
 - On Windows "Universal" (8.1), rowsAffected can be wrong when there are multiple levels of nesting of INSERT statements.
-- Memory issue observed when adding a large number of records on Android and Amazon Fire-OS, due to JSON implementation
+- Memory issue observed when adding a large number of records on Android ~~and Amazon Fire-OS~~, due to JSON implementation
 - A stability issue was reported on the iOS version when in use together with [SockJS](http://sockjs.org/) client such as [pusher-js](https://github.com/pusher/pusher-js) at the same time. The workaround is to call sqlite functions and [SockJS](http://sockjs.org/) client functions in separate ticks (using setTimeout with 0 timeout).
 - If a sql statement fails for which there is no error handler or the error handler does not return `false` to signal transaction recovery, the plugin fires the remaining sql callbacks before aborting the transaction.
 
@@ -64,7 +63,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 - The db version, display name, and size parameter values are not supported and will be ignored.
 - This plugin will not work before the callback for the "deviceready" event has been fired, as described in **Usage**. (This is consistent with the other Cordova plugins.)
-- The Android and Amazon Fire-OS versions cannot work with more than 100 open db files (due to the threading model used).
+- The Android ~~and Amazon Fire-OS~~ versions cannot work with more than 100 open db files (due to the threading model used).
 - UNICODE line separator (`\u2028`) is currently not supported and known to be broken in iOS version.
 - Blob type is currently not supported and known to be broken on multiple platforms.
 - UNICODE `\u0000` (same as `\0`) character not working in Windows (8.1) (or Windows Phone XX) version(s)
@@ -77,7 +76,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 ## Limited support (testing needed)
 
 - UNICODE paragraph separator (`\u2029`)
-- Database triggers as described above - known to be broken for ~~Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) and~~ Amazon Fire-OS
+- Triggers have only been tested on iOS~~, known to be broken on Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) and Amazon Fire-OS~~.
 - UNICODE characters not fully tested in the Windows "Universal" (8.1) version
 - JOIN needs to be tested more.
  
@@ -128,7 +127,7 @@ function onDeviceReady() {
 
 ### Pre-populated database
 
-For Android, iOS, and Amazon Fire-OS (*only*): put the database file in the `www` directory and open the database like:
+For Android, iOS~~, and Amazon Fire-OS~~ (*only*): put the database file in the `www` directory and open the database like:
 
 ```js
 var db = window.sqlitePlugin.openDatabase({name: "my.db", createFromLocation: 1});
@@ -179,7 +178,7 @@ This option is ignored if `androidDatabaseImplementation: 2` is not specified.
 ## Background processing
 
 The threading model depends on which version is used:
-- For Android and Amazon Fire-OS, one background thread per db;
+- For Android ~~and Amazon Fire-OS~~, one background thread per db;
 - for iOS, background processing using a very limited thread pool (only one thread working at a time);
 - for Windows "Universal" (8.1), no background processing (for future consideration).
 
@@ -322,7 +321,6 @@ You can find more details at [this writeup](http://iphonedevlog.wordpress.com/20
 - `src`: platform-specific source code:
    - `external` - placeholder used to import `sqlite3.[hc]` in this version branch-needed to build Windows "Universal" (8.1) version
    - `android` - Java plugin code for Android
-   - `android-classic` - Java plugin code for Amazon Fire-OS
    - `ios` - Objective-C plugin code for iOS;
    - `windows` - Javascript proxy code and SQLite3-WinRT project for Windows "Universal" (8.1);
 - `spec`: test suite using Jasmine (2.2.0), ported from QUnit `test-www` test suite, working on all platforms
@@ -581,7 +579,7 @@ The adapter is now part of [PouchDB](http://pouchdb.com/) thanks to [@nolanlawso
 ## Major branches
 
 - `cordova-sqlite-common`~~/`common-src`~~ - source for Android (*not* using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)), iOS, Windows (8.1), and Amazon Fire-OS versions (shared with [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter))
-- `new-common-src` - source for Android (using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)), iOS, Windows (8.1), and Amazon Fire-OS versions
+- `new-common-src` - source for Android (using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)), iOS, Windows (8.1)~~, and Amazon Fire-OS~~ versions
 - `new-common-rc` - pre-release version for Android/iOS/Windows (8.1), including library dependencies for Android and Windows (8.1)
 - `wp-src` - source for Android (*not* using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)), iOS, WP(7/8), and Amazon Fire-OS versions
 - `wp-master-rc` - pre-release version for Android(*not* using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector))/iOS/WP(7/8), including source for CSharp-SQLite (C#) library classes

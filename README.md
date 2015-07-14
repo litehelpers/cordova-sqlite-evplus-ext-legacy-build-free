@@ -1,4 +1,4 @@
-# Cordova/PhoneGap sqlite storage (common version ~~with limited functionality~~)
+# Cordova/PhoneGap sqlite storage (common version with limited functionality)
  
 Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, Windows "Universal" (8.1), ~~and Amazon Fire-OS~~ with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
 
@@ -24,13 +24,13 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
  
 ## Announcements
 
-- Android version is now using the lightweight [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) by default configuration (may be changed as described below)
+- Android version is now using the lightweight [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) by default configuration ~~(may be changed as described below)~~
 - Windows "Universal" version now supports both Windows 8.1 and Windows Phone 8.1
 - iOS version is now fixed to override the correct pluginInitialize method and should work with recent versions of iOS
 - The test suite is completely ported to Jasmine (2.2.0) and was used to verify the functionality of the new Windows version
 - [SQLCipher](https://www.zetetic.net/sqlcipher/) for Windows (8.1) in addition to Android & iOS is now supported by [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter)
 - New `openDatabase` and `deleteDatabase` `location` option to select database location (iOS *only*) and disable iCloud backup
-- Pre-populated databases support for Android, iOS, ~~and Amazon Fire-OS~~ is now integrated, usage described below
+- ~~Pre-populated databases support for Android, iOS, and Amazon Fire-OS is now integrated, usage described below~~
 - Fixes to work with PouchDB by [@nolanlawson](https://github.com/nolanlawson)
 
 ## Highlights
@@ -40,7 +40,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 - As described in [this posting](http://brodyspark.blogspot.com/2012/12/cordovaphonegap-sqlite-plugins-offer.html):
   - Keeps sqlite database in a user data location that is known; can be reconfigured (iOS version); and synchronized to iCloud by default (iOS version; can be disabled as described below).
   - No 5MB maximum, more information at: http://www.sqlite.org/limits.html
-- Pre-populated database option (usage described below)
+- ~~Pre-populated database option (usage described below)~~
 
 ## Some apps using this plugin
 
@@ -125,15 +125,17 @@ function onDeviceReady() {
 
 **NOTE:** The database file name should include the extension, if desired.
 
-### Pre-populated database
+### ~~Pre-populated database~~
 
-For Android, iOS~~, and Amazon Fire-OS~~ (*only*): put the database file in the `www` directory and open the database like:
+**CURRENTLY NON-FUNCTIONAL AND IGNORED:**
+
+~~For Android, iOS~~, and Amazon Fire-OS~~ (*only*): put the database file in the `www` directory and open the database like:~~
 
 ```js
 var db = window.sqlitePlugin.openDatabase({name: "my.db", createFromLocation: 1});
 ```
 
-or to disable iCloud backup:
+~~or to disable iCloud backup:~~
 
 ```js
 db = sqlitePlugin.openDatabase({name: "my.db", location: 2, createFromLocation: 1});

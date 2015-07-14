@@ -566,15 +566,6 @@
         dblocation = if !!openargs.location then dblocations[openargs.location] else null
         openargs.dblocation = dblocation || dblocations[0]
 
-        if !!openargs.createFromLocation and openargs.createFromLocation == 1
-          openargs.createFromResource = "1"
-
-        if !!openargs.androidDatabaseImplementation and openargs.androidDatabaseImplementation == 2
-          openargs.androidOldDatabaseImplementation = 1
-
-        if !!openargs.androidLockWorkaround and openargs.androidLockWorkaround == 1
-          openargs.androidBugWorkaround = 1
-
         new SQLitePlugin openargs, okcb, errorcb
 
       deleteDb: (first, success, error) ->

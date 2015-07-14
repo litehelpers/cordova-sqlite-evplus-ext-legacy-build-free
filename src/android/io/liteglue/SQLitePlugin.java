@@ -16,8 +16,8 @@ import java.lang.Number;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+//import java.util.regex.Matcher;
+//import java.util.regex.Pattern;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -26,10 +26,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.IOException;
+//import java.io.FileOutputStream;
+//import java.io.InputStream;
+//import java.io.OutputStream;
+//import java.io.IOException;
 
 public class SQLitePlugin extends CordovaPlugin {
 
@@ -206,14 +206,12 @@ public class SQLitePlugin extends CordovaPlugin {
      *
      * @param dbName   The name of the database file
      */
-    private SQLiteConnection openDatabase(String dbname, boolean createFromAssets, CallbackContext cbc) throws Exception {
+    private SQLiteConnection openDatabase(String dbname, CallbackContext cbc) throws Exception {
         try {
             // ASSUMPTION: no db (connection/handle) is already stored in the map
             // [should be true according to the code in DBRunner.run()]
 
             File dbfile = this.cordova.getActivity().getDatabasePath(dbname);
-
-            if (!dbfile.exists() && createFromAssets) this.createFromAssets(dbname, dbfile);
 
             if (!dbfile.exists()) {
                 dbfile.getParentFile().mkdirs();
@@ -224,63 +222,15 @@ public class SQLitePlugin extends CordovaPlugin {
             SQLiteConnection mydbc = connector.newSQLiteConnection(dbfile.getAbsolutePath(),
                 SQLiteOpenFlags.READWRITE | SQLiteOpenFlags.CREATE);
 
-            if (cbc != null) // XXX Android locking/closing BUG workaround
+            //if (cbc != null) // No longer needed [Android locking/closing BUG workaround GONE]
                 cbc.success();
 
             return mydbc;
         } catch (Exception e) {
-            if (cbc != null) // XXX Android locking/closing BUG workaround
+            //if (cbc != null) // No longer needed [Android locking/closing BUG workaround GONE]
                 cbc.error("can't open database " + e);
             throw e;
         }
-    }
-
-    /**
-     * If a prepopulated DB file exists in the assets folder it is copied to the dbPath.
-     * Only runs the first time the app runs.
-     */
-    private void createFromAssets(String myDBName, File dbfile)
-    {
-        InputStream in = null;
-        OutputStream out = null;
-
-            try {
-                in = this.cordova.getActivity().getAssets().open("www/" + myDBName);
-                String dbPath = dbfile.getAbsolutePath();
-                dbPath = dbPath.substring(0, dbPath.lastIndexOf("/") + 1);
-
-                File dbPathFile = new File(dbPath);
-                if (!dbPathFile.exists())
-                    dbPathFile.mkdirs();
-
-                File newDbFile = new File(dbPath + myDBName);
-                out = new FileOutputStream(newDbFile);
-
-                // XXX TODO: this is very primitive, other alternatives at:
-                // http://www.journaldev.com/861/4-ways-to-copy-file-in-java
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0)
-                    out.write(buf, 0, len);
-    
-                Log.v("info", "Copied prepopulated DB content to: " + newDbFile.getAbsolutePath());
-            } catch (IOException e) {
-                Log.v("createFromAssets", "No prepopulated DB found, Error=" + e.getMessage());
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException ignored) {
-                    }
-                }
-    
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException ignored) {
-                    }
-                }
-            }
     }
 
     /**
@@ -544,10 +494,6 @@ public class SQLitePlugin extends CordovaPlugin {
 
     private class DBRunner implements Runnable {
         final String dbname;
-        private boolean createFromAssets;
-        // XXX currently ignored - non-functional:
-        //private boolean oldImpl;
-        //private boolean bugWorkaround;
 
         final BlockingQueue<DBQuery> q;
         final CallbackContext openCbc;
@@ -556,14 +502,6 @@ public class SQLitePlugin extends CordovaPlugin {
 
         DBRunner(final String dbname, JSONObject options, CallbackContext cbc) {
             this.dbname = dbname;
-            this.createFromAssets = options.has("createFromResource");
-            // XXX currently ignored:
-            //this.oldImpl = options.has("androidOldDatabaseImplementation");
-            //Log.v(SQLitePlugin.class.getSimpleName(), "Android db implementation: " + (oldImpl ? "OLD" : "sqlite4java (NDK)"));
-            // XXX currently non-functional:
-            //this.bugWorkaround = this.oldImpl && options.has("androidBugWorkaround");
-            //if (this.bugWorkaround)
-            //    Log.v(SQLitePlugin.class.getSimpleName(), "Android db closing/locking workaround applied");
 
             this.q = new LinkedBlockingQueue<DBQuery>();
             this.openCbc = cbc;
@@ -571,7 +509,7 @@ public class SQLitePlugin extends CordovaPlugin {
 
         public void run() {
             try {
-                this.mydbc = openDatabase(dbname, this.createFromAssets, this.openCbc);
+                this.mydbc = openDatabase(dbname, this.openCbc);
             } catch (Exception e) {
                 Log.e(SQLitePlugin.class.getSimpleName(), "unexpected error, stopping db thread", e);
                 dbrmap.remove(dbname);
@@ -585,11 +523,6 @@ public class SQLitePlugin extends CordovaPlugin {
 
                 while (!dbq.stop) {
                     executeSqlBatch(mydbc, dbq.queries, dbq.jsonparams, dbq.queryIDs, dbq.cbc);
-
-                    // XXX currently non-functional:
-                    // NOTE: androidLock[Bug]Workaround is not necessary and IGNORED for sqlite4java (NDK version).
-                    //if (this.bugWorkaround && dbq.queries.length == 1 && dbq.queries[0] == "COMMIT")
-                    //    mydbc.bugWorkaround();
 
                     dbq = q.take();
                 }

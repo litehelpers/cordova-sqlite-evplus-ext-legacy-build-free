@@ -8,7 +8,6 @@ package io.liteglue;
 
 import android.annotation.SuppressLint;
 
-import android.util.Base64;
 import android.util.Log;
 
 import java.io.File;
@@ -207,7 +206,7 @@ public class SQLitePlugin extends CordovaPlugin {
      *
      * @param dbName   The name of the database file
      */
-    private SQLiteDatabaseAccess openDatabase(String dbname, boolean createFromAssets, CallbackContext cbc, boolean old_impl_ignored) throws Exception {
+    private SQLiteConnection openDatabase(String dbname, boolean createFromAssets, CallbackContext cbc) throws Exception {
         try {
             // ASSUMPTION: no db (connection/handle) is already stored in the map
             // [should be true according to the code in DBRunner.run()]
@@ -222,13 +221,13 @@ public class SQLitePlugin extends CordovaPlugin {
 
             Log.v("info", "Open sqlite db: " + dbfile.getAbsolutePath());
 
-            SQLiteDatabaseAccess mydb = new SQLiteDatabaseAccess();
-            mydb.open(dbfile);
+            SQLiteConnection mydbc = connector.newSQLiteConnection(dbfile.getAbsolutePath(),
+                SQLiteOpenFlags.READWRITE | SQLiteOpenFlags.CREATE);
 
             if (cbc != null) // XXX Android locking/closing BUG workaround
                 cbc.success();
 
-            return mydb;
+            return mydbc;
         } catch (Exception e) {
             if (cbc != null) // XXX Android locking/closing BUG workaround
                 cbc.error("can't open database " + e);
@@ -316,10 +315,14 @@ public class SQLitePlugin extends CordovaPlugin {
         DBRunner r = dbrmap.get(dbname);
 
         if (r != null) {
-            SQLiteDatabaseAccess mydb = r.mydb;
+            SQLiteConnection mydbc = r.mydbc;
 
-            if (mydb != null)
-                mydb.closeDatabaseNow();
+            try {
+                if (mydbc != null)
+                    mydbc.dispose();
+            } catch(Exception e) {
+                Log.e(SQLitePlugin.class.getSimpleName(), "couldn't close database", e);
+            }
         }
     }
 
@@ -362,56 +365,19 @@ public class SQLitePlugin extends CordovaPlugin {
         }
     }
 
-    // NOTE: class hierarchy is ugly, done to reduce number of modules for manual installation.
-    // ~~FUTURE TBD SQLiteDatabaseNDK class belongs in its own module.~~
-    // XXX TBD check if class members can be combined with the rest of SQLitePlugin class again:
-    class SQLiteDatabaseAccess {
-      SQLiteConnection mydb;
+    /**
+     * Executes a batch request and sends the results via cbc.
+     *
+     * @param dbname     The name of the database.
+     * @param queryarr   Array of query strings
+     * @param jsonparams Array of JSON query parameters
+     * @param queryIDs   Array of query ids
+     * @param cbc        Callback context from Cordova API
+     */
+    void executeSqlBatch(SQLiteConnection mydbc, String[] queryarr, JSONArray[] jsonparams,
+                         String[] queryIDs, CallbackContext cbc) {
 
-      /**
-       * Open a database.
-       *
-       * @param dbFile   The database File specification
-       */
-      //@Override
-      void open(File dbFile) throws Exception {
-        mydb = connector.newSQLiteConnection(dbFile.getAbsolutePath(),
-          SQLiteOpenFlags.READWRITE | SQLiteOpenFlags.CREATE);
-      }
-
-      /**
-       * Close a database (in the current thread).
-       */
-      //@Override
-      void closeDatabaseNow() {
-        try {
-          if (mydb != null)
-            mydb.dispose();
-        } catch (Exception e) {
-            Log.e(SQLitePlugin.class.getSimpleName(), "couldn't close database, ignoring", e);
-        }
-      }
-
-      /**
-       * Ignore Android bug workaround for NDK version
-       */
-      //@Override
-      void bugWorkaround() { }
-
-      /**
-       * Executes a batch request and sends the results via cbc.
-       *
-       * @param dbname     The name of the database.
-       * @param queryarr   Array of query strings
-       * @param jsonparams Array of JSON query parameters
-       * @param queryIDs   Array of query ids
-       * @param cbc        Callback context from Cordova API
-       */
-      //@Override
-      void executeSqlBatch( String[] queryarr, JSONArray[] jsonparams,
-                            String[] queryIDs, CallbackContext cbc) {
-
-        if (mydb == null) {
+        if (mydbc == null) {
             // not allowed - can only happen if someone has closed (and possibly deleted) a database and then re-used the database
             cbc.error("database has been closed");
             return;
@@ -431,14 +397,14 @@ public class SQLitePlugin extends CordovaPlugin {
             try {
                 String query = queryarr[i];
 
-                long lastTotal = mydb.getTotalChanges();
-                queryResult = this.executeSqlStatementNDK(query, jsonparams[i], cbc);
-                long newTotal = mydb.getTotalChanges();
+                long lastTotal = mydbc.getTotalChanges();
+                queryResult = this.executeSqlStatement(mydbc, query, jsonparams[i], cbc);
+                long newTotal = mydbc.getTotalChanges();
                 long rowsAffected = newTotal - lastTotal;
 
                 queryResult.put("rowsAffected", rowsAffected);
                 if (rowsAffected > 0) {
-                    long insertId = mydb.getLastInsertRowid();
+                    long insertId = mydbc.getLastInsertRowid();
                     if (insertId > 0) {
                         queryResult.put("insertId", insertId);
                     }
@@ -477,21 +443,21 @@ public class SQLitePlugin extends CordovaPlugin {
         }
 
         cbc.success(batchResults);
-      }
+    }
 
-      /**
-       * Get rows results from query cursor.
-       *
-       * @param cur Cursor into query results
-       * @return results in string form
-       */
-      private JSONObject executeSqlStatementNDK(String query, JSONArray paramsAsJson,
-                                                CallbackContext cbc) throws Exception {
+    /**
+     * Get rows results from query cursor.
+     *
+     * @param cur Cursor into query results
+     * @return results in string form
+     */
+    private JSONObject executeSqlStatement(SQLiteConnection mydbc, String query, JSONArray paramsAsJson,
+                                           CallbackContext cbc) throws Exception {
         JSONObject rowsResult = new JSONObject();
 
         boolean hasRows = false;
 
-        SQLiteStatement myStatement = mydb.prepareStatement(query);
+        SQLiteStatement myStatement = mydbc.prepareStatement(query);
 
         try {
             String[] params = null;
@@ -574,19 +540,19 @@ public class SQLitePlugin extends CordovaPlugin {
         myStatement.dispose();
 
         return rowsResult;
-      }
     }
 
     private class DBRunner implements Runnable {
         final String dbname;
         private boolean createFromAssets;
-        private boolean oldImpl;
-        private boolean bugWorkaround;
+        // XXX currently ignored - non-functional:
+        //private boolean oldImpl;
+        //private boolean bugWorkaround;
 
         final BlockingQueue<DBQuery> q;
         final CallbackContext openCbc;
 
-        SQLiteDatabaseAccess mydb;
+        SQLiteConnection mydbc;
 
         DBRunner(final String dbname, JSONObject options, CallbackContext cbc) {
             this.dbname = dbname;
@@ -595,9 +561,9 @@ public class SQLitePlugin extends CordovaPlugin {
             //this.oldImpl = options.has("androidOldDatabaseImplementation");
             //Log.v(SQLitePlugin.class.getSimpleName(), "Android db implementation: " + (oldImpl ? "OLD" : "sqlite4java (NDK)"));
             // XXX currently non-functional:
-            this.bugWorkaround = this.oldImpl && options.has("androidBugWorkaround");
-            if (this.bugWorkaround)
-                Log.v(SQLitePlugin.class.getSimpleName(), "Android db closing/locking workaround applied");
+            //this.bugWorkaround = this.oldImpl && options.has("androidBugWorkaround");
+            //if (this.bugWorkaround)
+            //    Log.v(SQLitePlugin.class.getSimpleName(), "Android db closing/locking workaround applied");
 
             this.q = new LinkedBlockingQueue<DBQuery>();
             this.openCbc = cbc;
@@ -605,7 +571,7 @@ public class SQLitePlugin extends CordovaPlugin {
 
         public void run() {
             try {
-                this.mydb = openDatabase(dbname, this.createFromAssets, this.openCbc, this.oldImpl);
+                this.mydbc = openDatabase(dbname, this.createFromAssets, this.openCbc);
             } catch (Exception e) {
                 Log.e(SQLitePlugin.class.getSimpleName(), "unexpected error, stopping db thread", e);
                 dbrmap.remove(dbname);
@@ -618,11 +584,12 @@ public class SQLitePlugin extends CordovaPlugin {
                 dbq = q.take();
 
                 while (!dbq.stop) {
-                    mydb.executeSqlBatch(dbq.queries, dbq.jsonparams, dbq.queryIDs, dbq.cbc);
+                    executeSqlBatch(mydbc, dbq.queries, dbq.jsonparams, dbq.queryIDs, dbq.cbc);
 
+                    // XXX currently non-functional:
                     // NOTE: androidLock[Bug]Workaround is not necessary and IGNORED for sqlite4java (NDK version).
-                    if (this.bugWorkaround && dbq.queries.length == 1 && dbq.queries[0] == "COMMIT")
-                        mydb.bugWorkaround();
+                    //if (this.bugWorkaround && dbq.queries.length == 1 && dbq.queries[0] == "COMMIT")
+                    //    mydbc.bugWorkaround();
 
                     dbq = q.take();
                 }

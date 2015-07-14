@@ -71,7 +71,6 @@
     }
 
     NSString *dbdir = [appDBPaths objectForKey:atkey];
-    //NSString *dbPath = [NSString stringWithFormat:@"%@/%@", dbdir, dbFile];
     NSString *dbPath = [dbdir stringByAppendingPathComponent: dbFile];
     return dbPath;
 }
@@ -291,7 +290,7 @@
     sqlite3_stmt *statement;
     int result, i, column_type, count;
     int previousRowsAffected, nowRowsAffected, diffRowsAffected;
-    long long previousInsertId, nowInsertId;
+    long long nowInsertId;
     BOOL keepGoing = YES;
     BOOL hasInsertId;
     NSMutableDictionary *resultSet = [NSMutableDictionary dictionaryWithCapacity:0];
@@ -304,7 +303,6 @@
 
     hasInsertId = NO;
     previousRowsAffected = sqlite3_total_changes(db);
-    previousInsertId = sqlite3_last_insert_rowid(db);
 
     if (sqlite3_prepare_v2(db, sql_stmt, -1, &statement, NULL) != SQLITE_OK) {
         error = [SQLitePlugin captureSQLiteErrorFromDb:db];
@@ -330,23 +328,23 @@
 
                     column_type = sqlite3_column_type(statement, i);
                     switch (column_type) {
+                        case SQLITE_NULL:
+                            columnValue = [NSNull null];
+                            break;
                         case SQLITE_INTEGER:
+                            columnValue = [NSNumber numberWithLongLong: sqlite3_column_int64(statement, i)];
+                            break;
+                        case SQLITE_FLOAT:
                             columnValue = [NSNumber numberWithDouble: sqlite3_column_double(statement, i)];
                             break;
-                        case SQLITE_BLOB:
-                        case SQLITE_TEXT:
+                        // Handles both TEXT & BLOB:
+                        default:
                             columnValue = [[NSString alloc] initWithBytes:(char *)sqlite3_column_text(statement, i)
                                                                    length:sqlite3_column_bytes(statement, i)
                                                                  encoding:NSUTF8StringEncoding];
 #if !__has_feature(objc_arc)
                             [columnValue autorelease];
 #endif
-                            break;
-                        case SQLITE_FLOAT:
-                            columnValue = [NSNumber numberWithDouble: sqlite3_column_double(statement, i)];
-                            break;
-                        case SQLITE_NULL:
-                            columnValue = [NSNull null];
                             break;
                     }
 
@@ -366,7 +364,7 @@
                 nowInsertId = sqlite3_last_insert_rowid(db);
                 if (nowRowsAffected > 0 && nowInsertId != 0) {
                     hasInsertId = YES;
-                    insertId = [NSNumber numberWithLongLong:sqlite3_last_insert_rowid(db)];
+                    insertId = [NSNumber numberWithLongLong:nowInsertId];
                 }
                 keepGoing = NO;
                 break;

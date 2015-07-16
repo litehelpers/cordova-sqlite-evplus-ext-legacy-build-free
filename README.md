@@ -1,8 +1,8 @@
-# Cordova/PhoneGap sqlite storage (common version with limited functionality)
+# Cordova/PhoneGap sqlite storage (common version with _somewhat_ limited functionality)
  
-Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, Windows "Universal" (8.1), ~~and Amazon Fire-OS~~ with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
+Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, and Windows "Universal" (8.1) with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
 
-License for Android, Windows "Universal" (8.1), ~~and Amazon Fire-OS~~ versions: MIT or Apache 2.0
+License for Android and Windows "Universal" (8.1) versions: MIT or Apache 2.0
 
 License for iOS version: MIT only
 
@@ -12,25 +12,31 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 ## Status
 
+- Features omitted from this version branch: pre-populated database support, REGEXP extension for iOS, WP(7/8) and Amazon Fire-OS support
 - Windows "Universal" (8.1) version is in an experimental/pre-alpha state:
   - Database close and delete operations not yet implemented
   - No background processing (for future consideration)
   - You *may* encounter issues with Cordova CLI due to [CB-8866](https://issues.apache.org/jira/browse/CB-8866); as a workaround you can install using [litehelpers / cordova-windows-nufix](https://github.com/litehelpers/cordova-windows-nufix) and `plugman` as described below.
   - In addition, problems with the Windows "Universal" version have been reported in case of a Cordova project using a Visual Studio template/extension instead of Cordova/PhoneGap CLI or `plugman`
   - Not tested with a Windows 10 (or Windows Phone 10) target; Windows 10 build is not expected to work with Windows Phone
+- FTS3, FTS4, and R-Tree support is tested working OK in this version (for target platforms Android/iOS/Windows "Universal")
+- Status for the other target platforms:
+  - Android: now using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) (with sqlite `3.7.17`), with support for FTS3/FTS4 and R-Tree
+  - iOS: sqlite `3.8.10.2` embedded
 - Android is supported back to SDK 10 (a.k.a. Gingerbread, Android 2.3.3); support for older versions is available upon request.
 - FTS3, FTS4, and R-Tree support is tested working OK in this version (for all target platforms Android/iOS/Windows "Universal")
 - API to open the database may be changed somewhat to be more streamlined. Transaction and single-statement query API will NOT be changed.
  
 ## Announcements
 
-- Android version is now using the lightweight [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) by default configuration ~~(may be changed as described below)~~
+- Android version is now using the lightweight [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) by default configuration
 - Windows "Universal" version now supports both Windows 8.1 and Windows Phone 8.1
 - iOS version is now fixed to override the correct pluginInitialize method and should work with recent versions of iOS
+- Project has been renamed to prevent confusion with [davibe / Phonegap-SQLitePlugin](https://github.com/davibe/Phonegap-SQLitePlugin) (original version for iOS, with a different API)
+- New project location (should redirect)
 - The test suite is completely ported to Jasmine (2.2.0) and was used to verify the functionality of the new Windows version
 - [SQLCipher](https://www.zetetic.net/sqlcipher/) for Windows (8.1) in addition to Android & iOS is now supported by [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter)
 - New `openDatabase` and `deleteDatabase` `location` option to select database location (iOS *only*) and disable iCloud backup
-- ~~Pre-populated databases support for Android, iOS, and Amazon Fire-OS is now integrated, usage described below~~
 - Fixes to work with PouchDB by [@nolanlawson](https://github.com/nolanlawson)
 
 ## Highlights
@@ -40,7 +46,6 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 - As described in [this posting](http://brodyspark.blogspot.com/2012/12/cordovaphonegap-sqlite-plugins-offer.html):
   - Keeps sqlite database in a user data location that is known; can be reconfigured (iOS version); and synchronized to iCloud by default (iOS version; can be disabled as described below).
   - No 5MB maximum, more information at: http://www.sqlite.org/limits.html
-- ~~Pre-populated database option (usage described below)~~
 
 ## Some apps using this plugin
 
@@ -51,11 +56,10 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 ## Known issues
 
-- Multi-page apps are not supported and known to be broken on Android ~~(and Amazon Fire-OS)~~.
-- Using web workers is currently not supported and known to be broken on Android ~~(and Amazon Fire-OS)~~.
-- ~~INSERT statement that affects multiple rows (due to SELECT cause or using triggers, for example) does not report proper rowsAffected on Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) or Amazon Fire-OS~~.
+- Multi-page apps are not supported and ~~known to~~ _may_ be broken on Android
+- Using web workers is currently not supported and known to be broken on Android
 - On Windows "Universal" (8.1), rowsAffected can be wrong when there are multiple levels of nesting of INSERT statements.
-- Memory issue observed when adding a large number of records on Android ~~and Amazon Fire-OS~~, due to JSON implementation
+- Memory issue observed when adding a large number of records on Android, due to JSON implementation
 - A stability issue was reported on the iOS version when in use together with [SockJS](http://sockjs.org/) client such as [pusher-js](https://github.com/pusher/pusher-js) at the same time. The workaround is to call sqlite functions and [SockJS](http://sockjs.org/) client functions in separate ticks (using setTimeout with 0 timeout).
 - If a sql statement fails for which there is no error handler or the error handler does not return `false` to signal transaction recovery, the plugin fires the remaining sql callbacks before aborting the transaction.
 
@@ -63,10 +67,10 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 - The db version, display name, and size parameter values are not supported and will be ignored.
 - This plugin will not work before the callback for the "deviceready" event has been fired, as described in **Usage**. (This is consistent with the other Cordova plugins.)
-- The Android ~~and Amazon Fire-OS~~ versions cannot work with more than 100 open db files (due to the threading model used).
+- The Android versions cannot work with more than 100 open db files (due to the threading model used).
 - UNICODE line separator (`\u2028`) is currently not supported and known to be broken in iOS version.
 - Blob type is currently not supported and known to be broken on multiple platforms.
-- UNICODE `\u0000` (same as `\0`) character not working in Windows (8.1) (or Windows Phone XX) version(s)
+- UNICODE `\u0000` (same as `\0`) character not working in Android or Windows/Windows Phone (8.1)
 - Case-insensitive matching and other string manipulations on Unicode characters, which is provided by optional ICU integration in the sqlite source and working with recent versions of Android, is not supported for any target platforms.
 - iOS version uses a thread pool but with only one thread working at a time due to "synchronized" database access
 - Large query result can be slow, also due to JSON implementation
@@ -76,7 +80,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 ## Limited support (testing needed)
 
 - UNICODE paragraph separator (`\u2029`)
-- Triggers have only been tested on iOS~~, known to be broken on Android (in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled) and Amazon Fire-OS~~.
+- Triggers have only been tested on iOS
 - UNICODE characters not fully tested in the Windows "Universal" (8.1) version
 - JOIN needs to be tested more.
  
@@ -125,62 +129,10 @@ function onDeviceReady() {
 
 **NOTE:** The database file name should include the extension, if desired.
 
-### ~~Pre-populated database~~
-
-**CURRENTLY NON-FUNCTIONAL AND IGNORED:**
-
-~~For Android, iOS~~, and Amazon Fire-OS~~ (*only*): put the database file in the `www` directory and open the database like:~~
-
-```js
-var db = window.sqlitePlugin.openDatabase({name: "my.db", createFromLocation: 1});
-```
-
-~~or to disable iCloud backup:~~
-
-```js
-db = sqlitePlugin.openDatabase({name: "my.db", location: 2, createFromLocation: 1});
-```
-
-**IMPORTANT NOTES:**
-
-- Put the pre-populated database file in the `www` subdirectory. This should work well with using the Cordova CLI to support both Android & iOS versions.
-- The pre-populated database file name must match **exactly** the file name given in `openDatabase`. The automatic extension has been completely eliminated.
-- The pre-populated database file is ignored if the database file with the same name already exists in your database file location.
-
-**TIP:** If you don't see the data from the pre-populated database file, completely remove your app and try it again!
-
-### Android sqlite implementation
-
-~~By default,~~ this plugin uses [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector), which is lightweight  and should be more efficient than the built-in Android database classes. *IGNORED:* ~~To use the built-in Android database classes instead:~~
-
-```js
-var db = window.sqlitePlugin.openDatabase({name: "my.db", androidDatabaseImplementation: 2});
-```
-
-### Workaround for Android db locking issue
-
-**CURRENTLY NON-FUNCTIONAL AND IGNORED:**
-
-[Issue #193](https://github.com/litehelpers/Cordova-sqlite-storage/issues/193) was reported (as observed by several app developers) that on some newer versions of the Android database classes, if the app is stopped or aborted without closing the database then:
-- (sometimes) there is an unexpected database lock
-- the data that was inserted is lost.
-
-This issue is suspected to be caused by [this Android sqlite commit](https://github.com/android/platform_external_sqlite/commit/d4f30d0d1544f8967ee5763c4a1680cb0553039f), which references and includes the sqlite commit at: http://www.sqlite.org/src/info/6c4c2b7dba
-
-There is an optional workaround that simply closes and reopens the database file at the end of every transaction that is committed. The workaround is enabled by opening the database with options as follows:
-
-```js
-var db = window.sqlitePlugin.openDatabase({name: "my.db", androidDatabaseImplementation: 2, androidLockWorkaround: 1});
-```
-
-This option is ignored if `androidDatabaseImplementation: 2` is not specified.
-
-**IMPORTANT NOTE:** This workaround is *only* applied when using `db.transaction()` or `db.readTransaction()`, *not* applied when running `executeSql()` on the database object.
-
 ## Background processing
 
 The threading model depends on which version is used:
-- For Android ~~and Amazon Fire-OS~~, one background thread per db;
+- For Android, one background thread per db;
 - for iOS, background processing using a very limited thread pool (only one thread working at a time);
 - for Windows "Universal" (8.1), no background processing (for future consideration).
 
@@ -275,7 +227,10 @@ window.sqlitePlugin.deleteDatabase({name: "my.db", location: 1}, successcb, erro
 
 **PREREQUISITE** in this version branch *ONLY*: install recent version of `sqlite3.[hc]` in `src/external` and make sure the following constants are defined: `#define SQLITE_TEMP_STORE 2` `#define SQLITE_THREADSAFE 2` and for Windows Phone 8.1 *only*: `#define SQLITE_WIN32_FILEMAPPING_API 1`
 
-**IMPORTANT:** The Cordova CLI currently does not support all Windows target platforms (such as ("Mixed Platforms") due to [CB-8866](https://issues.apache.org/jira/browse/CB-8866). As an alternative, you can use `plugman` instead with [litehelpers / cordova-windows-nufix](https://github.com/litehelpers/cordova-windows-nufix), as described here.
+**IMPORTANT:** There are issues supporing certain Windows target platforms due to [CB-8866](https://issues.apache.org/jira/browse/CB-8866):
+- When using Visual Studio, the default target ("Mixed Platforms") will not work
+- Problems have been with the Windows "Universal" version case of a Cordova project using a Visual Studio template/extension instead of Cordova/PhoneGap CLI or `plugman`
+As an alternative, which will support the ("Mixed Platforms") target, you can use `plugman` instead with [litehelpers / cordova-windows-nufix](https://github.com/litehelpers/cordova-windows-nufix), as described here.
 
 ### Using plugman to support "Mixed Platforms"
 
@@ -321,7 +276,7 @@ You can find more details at [this writeup](http://iphonedevlog.wordpress.com/20
 - `SQLitePlugin.coffee.md`: platform-independent (Literate coffee-script, can be read by recent coffee-script compiler)
 - `www`: `SQLitePlugin.js` platform-independent Javascript as generated from `SQLitePlugin.coffee.md` (and checked in!)
 - `src`: platform-specific source code:
-   - `external` - placeholder used to import `sqlite3.[hc]` in this version branch-needed to build Windows "Universal" (8.1) version
+   - `external` - placeholder used to import `sqlite-connector.jar`, `sqlite-native-driver.jar` (needed for Android version), and `sqlite3.[hc]` (needed to build Windows "Universal" (8.1) version) in this version branch
    - `android` - Java plugin code for Android
    - `ios` - Objective-C plugin code for iOS;
    - `windows` - Javascript proxy code and SQLite3-WinRT project for Windows "Universal" (8.1);
@@ -335,6 +290,7 @@ These installation instructions are based on the Android example project from Co
 
  - Install `SQLitePlugin.js` from `www` into `assets/www`
  - Install `SQLitePlugin.java` from `src/android/io/liteglue` into `src/io/liteglue` subdirectory
+ - Install the `libs` subtree with ~~the 2 jars from `src/android/libs`~~ `sqlite-connector.jar` and `sqlite-native-driver.jar` into your Android project
  - Add the plugin element `<plugin name="SQLitePlugin" value="io.liteglue.SQLitePlugin"/>` to `res/xml/config.xml`
 
 Sample change to `res/xml/config.xml` for Cordova/PhoneGap 2.x:
@@ -495,8 +451,8 @@ Then you can [raise the new issue](https://github.com/litehelpers/Cordova-sqlite
  
 ## Community forum
 
-If you have any questions about the plugin please post them to the new discussion forum at [Ost.io / @litehelpers / Cordova-sqlite-storage](http://ost.io/@litehelpers/Cordova-sqlite-storage).
- 
+TBD
+
 # Unit tests
 
 Unit testing is done in `spec`.
@@ -561,7 +517,7 @@ ingredients = new Lawnchair({db: "cookbook", name: "ingredients", ...}, myCallba
 
 The adapter is now part of [PouchDB](http://pouchdb.com/) thanks to [@nolanlawson](https://github.com/nolanlawson), see [PouchDB FAQ](http://pouchdb.com/faq.html).
 
-**NOTE:** For some reason, the PouchDB adapter does not pass all of its tests with this plugin.
+**NOTE:** The PouchDB adapter has not been tested with the Android version which is using the new [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector).
 
 # Contributing
 

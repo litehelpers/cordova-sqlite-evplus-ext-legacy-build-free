@@ -1,4 +1,4 @@
-# Cordova/PhoneGap sqlite storage (common version with _somewhat_ limited functionality)
+# Cordova/PhoneGap sqlite storage - enterprise common version with Android memory fix
  
 Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, and Windows "Universal" (8.1) with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
 
@@ -27,7 +27,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
  
 ## Announcements
 
-- Android version is now using the lightweight [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) by default configuration
+- Android version is now using the lightweight [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)
 - Windows "Universal" version now supports both Windows 8.1 and Windows Phone 8.1
 - iOS version is now fixed to override the correct pluginInitialize method and should work with recent versions of iOS
 - Project has been renamed to prevent confusion with [davibe / Phonegap-SQLitePlugin](https://github.com/davibe/Phonegap-SQLitePlugin) (original version for iOS, with a different API)
@@ -54,10 +54,10 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 ## Known issues
 
-- Multi-page apps are not supported and ~~known to~~ _may_ be broken on Android
+- Multi-page apps are not supported and _may_ be broken on Android
 - Using web workers is currently not supported and known to be broken on Android
 - On Windows "Universal" (8.1), rowsAffected can be wrong when there are multiple levels of nesting of INSERT statements.
-- Memory issue observed when adding a large number of records on Android, due to JSON implementation
+- FIXED: ~~Memory issue observed when adding a large number of records on Android, due to JSON implementation~~
 - A stability issue was reported on the iOS version when in use together with [SockJS](http://sockjs.org/) client such as [pusher-js](https://github.com/pusher/pusher-js) at the same time. The workaround is to call sqlite functions and [SockJS](http://sockjs.org/) client functions in separate ticks (using setTimeout with 0 timeout).
 - If a sql statement fails for which there is no error handler or the error handler does not return `false` to signal transaction recovery, the plugin fires the remaining sql callbacks before aborting the transaction.
 
@@ -288,7 +288,7 @@ These installation instructions are based on the Android example project from Co
 
  - Install `SQLitePlugin.js` from `www` into `assets/www`
  - Install `SQLitePlugin.java` from `src/android/io/liteglue` into `src/io/liteglue` subdirectory
- - Install the `libs` subtree with ~~the 2 jars from `src/android/libs`~~ `sqlite-connector.jar` and `sqlite-native-driver.jar` into your Android project
+ - Install the `libs` subtree with `sqlite-connector.jar` and `sqlite-native-driver.jar` into your Android project
  - Add the plugin element `<plugin name="SQLitePlugin" value="io.liteglue.SQLitePlugin"/>` to `res/xml/config.xml`
 
 Sample change to `res/xml/config.xml` for Cordova/PhoneGap 2.x:
@@ -533,6 +533,8 @@ The adapter is now part of [PouchDB](http://pouchdb.com/) thanks to [@nolanlawso
   - Never mix a move/rename operation with any other changes in the same commit.
 
 ## Major branches
+
+TBD fix for this version:
 
 - `cordova-sqlite-common`~~/`common-src`~~ - source for Android (*not* using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)), iOS, Windows (8.1), and Amazon Fire-OS versions (shared with [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter))
 - `new-common-src` - source for Android (using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)), iOS, Windows (8.1)~~, and Amazon Fire-OS~~ versions

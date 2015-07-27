@@ -1,5 +1,5 @@
 (function() {
-  var DB_STATE_INIT, DB_STATE_OPEN, READ_ONLY_REGEX, SQLiteFactory, SQLitePlugin, SQLitePluginTransaction, argsArray, dblocations, newSQLError, nextTick, root, txLocks;
+  var DB_STATE_INIT, DB_STATE_OPEN, READ_ONLY_REGEX, SQLiteFactory, SQLitePlugin, SQLitePluginTransaction, argsArray, dblocations, newSQLError, nextTick, root, txLocks, useflatjson;
 
   root = this;
 
@@ -10,6 +10,8 @@
   DB_STATE_OPEN = "OPEN";
 
   txLocks = {};
+
+  useflatjson = false;
 
   newSQLError = function(error, code) {
     var sqlError;
@@ -68,6 +70,9 @@
       throw newSQLError("Cannot create a SQLitePlugin db instance without a db name");
     }
     dbname = openargs.name;
+    if (typeof dbname !== 'string') {
+      throw newSQLError('sqlite plugin database name must be a string');
+    }
     this.openargs = openargs;
     this.dbname = dbname;
     this.openSuccess = openSuccess;
@@ -170,8 +175,13 @@
     } else {
       console.log('OPEN database: ' + this.dbname);
       opensuccesscb = (function(_this) {
-        return function() {
+        return function(a1) {
           var txLock;
+          console.log('OPEN database: ' + _this.dbname + ' OK');
+          if (!!a1 && a1 === 'a1') {
+            console.log('Detected Android version with flat JSON interface');
+            useflatjson = true;
+          }
           if (!_this.openDBs[_this.dbname]) {
             console.log('database was closed during open operation');
           }
@@ -307,8 +317,7 @@
   };
 
   SQLitePluginTransaction.prototype.addStatement = function(sql, values, success, error) {
-    var params, qid, t, v, _i, _len;
-    qid = this.executes.length;
+    var params, t, v, _i, _len;
     params = [];
     if (!!values && values.constructor === Array) {
       for (_i = 0, _len = values.length; _i < _len; _i++) {
@@ -320,7 +329,6 @@
     this.executes.push({
       success: success,
       error: error,
-      qid: qid,
       sql: sql,
       params: params
     });
@@ -355,9 +363,8 @@
   };
 
   SQLitePluginTransaction.prototype.run = function() {
-    var batchExecutes, handlerFor, i, mycb, mycbmap, qid, request, tropts, tx, txFailure, waiting;
+    var batchExecutes, handlerFor, tx, txFailure, waiting;
     txFailure = null;
-    tropts = [];
     batchExecutes = this.executes;
     waiting = batchExecutes.length;
     this.executes = [];
@@ -388,35 +395,137 @@
         }
       };
     };
-    i = 0;
+    if (useflatjson) {
+      this.run_batch_flatjson(batchExecutes, handlerFor);
+    } else {
+      this.run_batch(batchExecutes, handlerFor);
+    }
+  };
+
+  SQLitePluginTransaction.prototype.run_batch_flatjson = function(batchExecutes, handlerFor) {
+    var flatlist, i, mycb, mycbmap, p, request, _i, _len, _ref;
+    flatlist = [];
     mycbmap = {};
+    i = 0;
     while (i < batchExecutes.length) {
       request = batchExecutes[i];
-      qid = request.qid;
-      mycbmap[qid] = {
+      mycbmap[i] = {
+        success: handlerFor(i, true),
+        error: handlerFor(i, false)
+      };
+      flatlist.push(request.sql);
+      flatlist.push(request.params.length);
+      _ref = request.params;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        p = _ref[_i];
+        flatlist.push(p);
+      }
+      i++;
+    }
+    mycb = function(result) {
+      var c, changes, errormessage, insert_id, j, k, q, r, ri, rl, row, rows, v;
+      i = 0;
+      ri = 0;
+      rl = result.length;
+      while (ri < rl) {
+        r = result[ri++];
+        q = mycbmap[i];
+        if (r === 'ok') {
+          q.success({
+            rows: []
+          });
+        } else if (r === "ch2") {
+          changes = result[ri++];
+          insert_id = result[ri++];
+          q.success({
+            rowsAffected: changes,
+            insertId: insert_id
+          });
+        } else if (r === 'okrows') {
+          rows = [];
+          changes = 0;
+          insert_id = void 0;
+          if (result[ri] === 'changes') {
+            ++ri;
+            changes = result[ri++];
+          }
+          if (result[ri] === 'insert_id') {
+            ++ri;
+            insert_id = result[ri++];
+          }
+          while (result[ri] !== 'endrows') {
+            c = result[ri++];
+            j = 0;
+            row = {};
+            while (j < c) {
+              k = result[ri++];
+              v = result[ri++];
+              row[k] = v;
+              ++j;
+            }
+            rows.push(row);
+          }
+          q.success({
+            rows: rows,
+            rowsAffected: changes,
+            insertId: insert_id
+          });
+          ++ri;
+        } else if (r === 'errormessage') {
+          errormessage = result[ri++];
+          q.error({
+            result: {
+              message: errormessage
+            }
+          });
+        }
+        ++i;
+      }
+    };
+    cordova.exec(mycb, null, "SQLitePlugin", "backgroundExecuteSqlBatch", [
+      {
+        dbargs: {
+          dbname: this.db.dbname
+        },
+        flen: batchExecutes.length,
+        flatlist: flatlist
+      }
+    ]);
+  };
+
+  SQLitePluginTransaction.prototype.run_batch = function(batchExecutes, handlerFor) {
+    var i, mycb, mycbmap, request, tropts;
+    tropts = [];
+    mycbmap = {};
+    i = 0;
+    while (i < batchExecutes.length) {
+      request = batchExecutes[i];
+      mycbmap[i] = {
         success: handlerFor(i, true),
         error: handlerFor(i, false)
       };
       tropts.push({
-        qid: qid,
+        qid: 1111,
         sql: request.sql,
         params: request.params
       });
       i++;
     }
     mycb = function(result) {
-      var q, r, res, type, _i, _len;
-      for (_i = 0, _len = result.length; _i < _len; _i++) {
-        r = result[_i];
+      var q, r, res, reslength, type;
+      i = 0;
+      reslength = result.length;
+      while (i < reslength) {
+        r = result[i];
         type = r.type;
-        qid = r.qid;
         res = r.result;
-        q = mycbmap[qid];
+        q = mycbmap[i];
         if (q) {
           if (q[type]) {
             q[type](res);
           }
         }
+        ++i;
       }
     };
     cordova.exec(mycb, null, "SQLitePlugin", "backgroundExecuteSqlBatch", [
@@ -533,15 +642,6 @@
       }
       dblocation = !!openargs.location ? dblocations[openargs.location] : null;
       openargs.dblocation = dblocation || dblocations[0];
-      if (!!openargs.createFromLocation && openargs.createFromLocation === 1) {
-        openargs.createFromResource = "1";
-      }
-      if (!!openargs.androidDatabaseImplementation && openargs.androidDatabaseImplementation === 2) {
-        openargs.androidOldDatabaseImplementation = 1;
-      }
-      if (!!openargs.androidLockWorkaround && openargs.androidLockWorkaround === 1) {
-        openargs.androidBugWorkaround = 1;
-      }
       return new SQLitePlugin(openargs, okcb, errorcb);
     }),
     deleteDb: function(first, success, error) {

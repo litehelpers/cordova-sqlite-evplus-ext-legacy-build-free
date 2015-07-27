@@ -7,6 +7,7 @@
 - Translated to Coffee-Script using js2coffee tool by @brodybits (Chris Brody)
 - API changes by @brodybits (Chris Brody)
 - Transaction timing fixes to support PouchDB by @nolanlawson
+- Android JSON memory fix by @brodybits (Chris Brody)
 
 ## Android version
 
@@ -15,6 +16,7 @@
 - Maintained by @brodybits (Chris Brody)
 - Fixes to support old Android versions by @nolanlawson
 - Thanks to Mark Oppenheim <mark.oppenheim@mnetics.co.uk> for fixes to open/close callbacks and repeated open/close/delete operations
+- Android JSON memory fix by @brodybits (Chris Brody)
 
 ## iOS version
 
@@ -26,4 +28,3 @@
 
 - SQLiteProxy.js by @vldmrrr (Vladimir Avdonin) and @brodybits (Chris Brody)
 - SQLite3-WinRT C++ classes and SQLite3JS (Javascript part) by @doo (doo GmbH)
-- SQLite3-Windows8.1.vcxproj to build SQLite3.winmd by @EionRobb

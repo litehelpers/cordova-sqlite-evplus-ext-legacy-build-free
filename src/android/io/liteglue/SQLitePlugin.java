@@ -2,6 +2,9 @@
  * Copyright (c) 2012-2015, Chris Brody
  * Copyright (c) 2005-2010, Nitobi Software Inc.
  * Copyright (c) 2010, IBM Corporation
+ *
+ * License for this version: GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license.
+ * Contact for commercial license: info@litehelpers.net
  */
 
 package io.liteglue;

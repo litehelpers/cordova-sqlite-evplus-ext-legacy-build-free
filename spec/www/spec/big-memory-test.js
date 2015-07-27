@@ -1,7 +1,7 @@
 /* 'use strict'; */
 
 // increased timeout for these tests:
-var MYTIMEOUT = 120000;
+var MYTIMEOUT = 360000;
 
 var DEFAULT_SIZE = 5000000; // max to avoid popup in safari/ios
 
@@ -50,9 +50,6 @@ var mytests = function() {
         it(suiteName + 'adding a large number of records', function(done) {
 
           if (isWP8) pending('BROKEN for WP(7/8)'); // Hangs on wp8 platform
-
-          // remove next line to reproduce crash on Android version:
-          if (isAndroid && !isWebSql) pending('BROKEN-crashing on Android version of plugin');
 
           var db = openDatabase("add-large-number-of-records.db", "1.0", "Demo", DEFAULT_SIZE);
 

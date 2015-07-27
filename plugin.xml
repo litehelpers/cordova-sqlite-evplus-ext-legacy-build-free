@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    id="cordova-sqlite-common"
+    id="cordova-sqlite-evcommon"
     version="0.7.0-dev">
 
-    <name>Cordova sqlite storage (common)</name>
+    <name>Cordova sqlite storage enterprise (common source) with Android memory fix</name>
 
-    <license>MIT</license>
+    <license>GPL</license>
 
     <keywords>sqlite</keywords>
 
     <description>Native interface to SQLite for PhoneGap/Cordova. Allows you to use more storage and provides more flexibility than the standard Web SQL database (window.openDatabase).</description>
-    <author>Various</author>
+    <author>Litehelpers (various)</author>
 
     <engines>
         <engine name="cordova" version=">=3.3.0" />

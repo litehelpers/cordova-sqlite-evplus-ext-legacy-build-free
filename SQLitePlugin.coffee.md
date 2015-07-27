@@ -32,6 +32,9 @@
     # XXX TBD this will be renamed and include some more per-db state.
     txLocks = {}
 
+    # Indicate if the platform implementation (Android) requires flat JSON interface
+    useflatjson = false
+
 ## utility functions:
 
     # Errors returned to callbacks must conform to `SqlError` with a code and message.
@@ -213,9 +216,15 @@
       else
         console.log 'OPEN database: ' + @dbname
 
-        opensuccesscb = =>
+        opensuccesscb = (a1) =>
           # NOTE: the db state is NOT stored (in @openDBs) if the db was closed or deleted.
           console.log 'OPEN database: ' + @dbname + ' OK'
+
+          # Needed to distinguish between Android version (with flat JSON batch sql interface) and
+          # other versions (JSON batch interface unchanged)
+          if !!a1 and a1 == 'a1'
+            console.log 'Detected Android version with flat JSON interface'
+            useflatjson = true
 
           #if !@openDBs[@dbname] then call open error cb, and abort pending tx if any
           if !@openDBs[@dbname]
@@ -423,16 +432,99 @@
 
           return
 
-      @run_batch(batchExecutes, handlerFor)
+      if useflatjson
+        @run_batch_flatjson batchExecutes, handlerFor
+      else
+        @run_batch batchExecutes, handlerFor
       return
 
-    SQLitePluginTransaction::run_batch = (batchExecutes, handlerFor) ->
+    # version for Android (with flat JSON interface)
+    SQLitePluginTransaction::run_batch_flatjson = (batchExecutes, handlerFor) ->
+      flatlist = []
+      mycbmap = {}
 
       i = 0
+      while i < batchExecutes.length
+        request = batchExecutes[i]
 
+        mycbmap[i] =
+          success: handlerFor(i, true)
+          error: handlerFor(i, false)
+
+        flatlist.push request.sql
+        flatlist.push request.params.length
+        for p in request.params
+          flatlist.push p
+
+        i++
+
+      mycb = (result) ->
+        i = 0
+        ri = 0
+        rl = result.length
+
+        while ri < rl
+          r = result[ri++]
+          q = mycbmap[i]
+
+          if r == 'ok'
+            q.success { rows: [] }
+
+          else if r is "ch2"
+            changes = result[ri++]
+            insert_id = result[ri++]
+            q.success
+              rowsAffected: changes
+              insertId: insert_id
+
+          else if r == 'okrows'
+            rows = []
+            changes = 0
+            insert_id = undefined
+
+            if result[ri] == 'changes'
+              ++ri
+              changes = result[ri++]
+
+            if result[ri] == 'insert_id'
+              ++ri
+              insert_id = result[ri++]
+
+            while result[ri] != 'endrows'
+              c = result[ri++]
+              j = 0
+              row = {}
+
+              while j < c
+                k = result[ri++]
+                v = result[ri++]
+                row[k] = v
+                ++j
+
+              rows.push row
+
+            q.success { rows: rows, rowsAffected: changes, insertId: insert_id }
+            ++ri
+
+          else if r == 'errormessage'
+            errormessage = result[ri++]
+            q.error { result: { message: errormessage } }
+
+          ++i
+
+        return
+
+      cordova.exec mycb, null, "SQLitePlugin", "backgroundExecuteSqlBatch",
+        [{dbargs: {dbname: @db.dbname}, flen: batchExecutes.length, flatlist: flatlist}]
+
+      return
+
+    # version for other platforms
+    SQLitePluginTransaction::run_batch = (batchExecutes, handlerFor) ->
       tropts = []
       mycbmap = {}
 
+      i = 0
       while i < batchExecutes.length
         request = batchExecutes[i]
 
@@ -448,14 +540,12 @@
         i++
 
       mycb = (result) ->
-        #console.log "mycb result #{JSON.stringify result}"
-
         i = 0
         reslength = result.length
         while i < reslength
           r = result[i]
           type = r.type
-          # NOTE: r.qid can be ignored
+          # NOTE: r.qid ignored (if present)
           res = r.result
 
           q = mycbmap[i]

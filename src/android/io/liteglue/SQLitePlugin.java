@@ -37,7 +37,7 @@ public class SQLitePlugin extends CordovaPlugin {
     static ConcurrentHashMap<String, DBRunner> dbrmap = new ConcurrentHashMap<String, DBRunner>();
 
     /**
-     * SQLiteGlueConnector (instance of SQLiteConnector) for NDK version:
+     * SQLiteConnector for native sqlite library access
      */
     static SQLiteConnector connector = new SQLiteConnector();
 
@@ -106,38 +106,27 @@ public class SQLitePlugin extends CordovaPlugin {
 
             case executeSqlBatch:
             case backgroundExecuteSqlBatch:
-                String[] queries = null;
-                String[] queryIDs = null;
-
-                JSONArray jsonArr = null;
-                int paramLen = 0;
-                JSONArray[] jsonparams = null;
-
                 JSONObject allargs = args.getJSONObject(0);
+
                 JSONObject dbargs = allargs.getJSONObject("dbargs");
                 dbname = dbargs.getString("dbname");
-                JSONArray txargs = allargs.getJSONArray("executes");
 
-                if (txargs.isNull(0)) {
-                    queries = new String[0];
-                } else {
-                    int len = txargs.length();
-                    queries = new String[len];
-                    queryIDs = new String[len];
-                    jsonparams = new JSONArray[len];
+                int mylen = allargs.getInt("flen");
 
-                    for (int i = 0; i < len; i++) {
-                        JSONObject a = txargs.getJSONObject(i);
-                        queries[i] = a.getString("sql");
-                        queryIDs[i] = a.getString("qid");
-                        jsonArr = a.getJSONArray("params");
-                        paramLen = jsonArr.length();
-                        jsonparams[i] = jsonArr;
-                    }
+                JSONArray flatlist = allargs.getJSONArray("flatlist");
+                int ai = 0;
+
+                String[] queries = new String[mylen];
+
+                // XXX TODO: currently goes through flatlist in multiple [2] passes
+                for (int i = 0; i < mylen; i++) {
+                    queries[i] = flatlist.getString(ai++);
+                    int alen = flatlist.getInt(ai++);
+                    ai += alen;
                 }
 
                 // put db query in the queue to be executed in the db thread:
-                DBQuery q = new DBQuery(queries, queryIDs, jsonparams, cbc);
+                DBQuery q = new DBQuery(queries, flatlist, cbc);
                 DBRunner r = dbrmap.get(dbname);
                 if (r != null) {
                     try {
@@ -190,7 +179,7 @@ public class SQLitePlugin extends CordovaPlugin {
             // don't orphan the existing thread; just re-open the existing database.
             // In the worst case it might be in the process of closing, but even that's less serious
             // than orphaning the old DBRunner.
-            cbc.success();
+            cbc.success("a1"); // Indicate Android version with flat JSON interface
         } else {
             r = new DBRunner(dbname, options, cbc);
             dbrmap.put(dbname, r);
@@ -218,13 +207,12 @@ public class SQLitePlugin extends CordovaPlugin {
             SQLiteConnection mydbc = connector.newSQLiteConnection(dbfile.getAbsolutePath(),
                 SQLiteOpenFlags.READWRITE | SQLiteOpenFlags.CREATE);
 
-            //if (cbc != null) // No longer needed [Android locking/closing BUG workaround GONE]
-                cbc.success();
+            // Indicate Android version with flat JSON interface
+            cbc.success("a1");
 
             return mydbc;
         } catch (Exception e) {
-            //if (cbc != null) // No longer needed [Android locking/closing BUG workaround GONE]
-                cbc.error("can't open database " + e);
+            cbc.error("can't open database " + e);
             throw e;
         }
     }
@@ -314,15 +302,12 @@ public class SQLitePlugin extends CordovaPlugin {
     /**
      * Executes a batch request and sends the results via cbc.
      *
-     * @param dbname     The name of the database.
+     * @param mydbc      sqlite connection reference
      * @param queryarr   Array of query strings
-     * @param jsonparams Array of JSON query parameters
-     * @param queryIDs   Array of query ids
+     * @param flatlist   Flat array of JSON query statements and parameters
      * @param cbc        Callback context from Cordova API
      */
-    void executeSqlBatch(SQLiteConnection mydbc, String[] queryarr, JSONArray[] jsonparams,
-                         String[] queryIDs, CallbackContext cbc) {
-
+    void executeSqlBatch(SQLiteConnection mydbc, String[] queryarr, JSONArray flatlist, CallbackContext cbc) {
         if (mydbc == null) {
             // not allowed - can only happen if someone has closed (and possibly deleted) a database and then re-used the database
             cbc.error("database has been closed");
@@ -330,162 +315,136 @@ public class SQLitePlugin extends CordovaPlugin {
         }
 
         int len = queryarr.length;
-        JSONArray batchResults = new JSONArray();
+        JSONArray batchResultsList = new JSONArray();
+
+        int ai=0;
 
         for (int i = 0; i < len; i++) {
             int rowsAffectedCompat = 0;
             boolean needRowsAffectedCompat = false;
-            String query_id = queryIDs[i];
-
-            JSONObject queryResult = null;
-            String errorMessage = "unknown";
 
             try {
                 String query = queryarr[i];
 
-                long lastTotal = mydbc.getTotalChanges();
-                queryResult = this.executeSqlStatement(mydbc, query, jsonparams[i], cbc);
-                long newTotal = mydbc.getTotalChanges();
-                long rowsAffected = newTotal - lastTotal;
+                ai++;
+                int alen = flatlist.getInt(ai++);
 
-                queryResult.put("rowsAffected", rowsAffected);
-                if (rowsAffected > 0) {
-                    long insertId = mydbc.getLastInsertRowid();
-                    if (insertId > 0) {
-                        queryResult.put("insertId", insertId);
-                    }
-                }
+                // Need to do this in case this.executeSqlStatement() throws:
+                int query_ai = ai;
+                ai += alen;
+
+                this.executeSqlStatement(mydbc, query, flatlist, query_ai, alen, batchResultsList);
             } catch (Exception ex) {
                 ex.printStackTrace();
-                errorMessage = ex.getMessage();
-                Log.v("executeSqlBatch", "SQLitePlugin.executeSql[Batch](): Error=" + errorMessage);
-            }
-
-            try {
-                if (queryResult != null) {
-                    JSONObject r = new JSONObject();
-                    r.put("qid", query_id);
-
-                    r.put("type", "success");
-                    r.put("result", queryResult);
-
-                    batchResults.put(r);
-                } else {
-                    JSONObject r = new JSONObject();
-                    r.put("qid", query_id);
-                    r.put("type", "error");
-
-                    JSONObject er = new JSONObject();
-                    er.put("message", errorMessage);
-                    r.put("result", er);
-
-                    batchResults.put(r);
-                }
-            } catch (JSONException ex) {
-                ex.printStackTrace();
-                Log.v("executeSqlBatch", "SQLitePlugin.executeSql[Batch](): Error=" + ex.getMessage());
+                Log.e("executeSqlBatch", "SQLitePlugin.executeSql[Batch](): Error=" + ex.getMessage());
                 // TODO what to do?
             }
         }
 
-        cbc.success(batchResults);
+        cbc.success(batchResultsList);
     }
 
-    /**
-     * Get rows results from query cursor.
-     *
-     * @param cur Cursor into query results
-     * @return results in string form
-     */
-    private JSONObject executeSqlStatement(SQLiteConnection mydbc, String query, JSONArray paramsAsJson,
-                                           CallbackContext cbc) throws Exception {
-        JSONObject rowsResult = new JSONObject();
-
+    private void executeSqlStatement(SQLiteConnection mydbc, String query, JSONArray paramsAsJson,
+                                     int firstParamIndex, int paramCount, JSONArray batchResultsList) throws Exception {
         boolean hasRows = false;
 
-        SQLiteStatement myStatement = mydbc.prepareStatement(query);
+        SQLiteStatement myStatement = null;
+
+        long newTotal = 0;
+        long rowsAffected = 0;
+        long insertId = -1;
+
+        String errorMessage = null;
 
         try {
-            String[] params = null;
+            myStatement = mydbc.prepareStatement(query);
 
-            params = new String[paramsAsJson.length()];
-
-            for (int i = 0; i < paramsAsJson.length(); ++i) {
-                if (paramsAsJson.isNull(i)) {
+            for (int i = 0; i < paramCount; ++i) {
+                int jsonParamIndex = firstParamIndex + i;
+                if (paramsAsJson.isNull(jsonParamIndex)) {
                     myStatement.bindNull(i + 1);
                 } else {
-                    Object p = paramsAsJson.get(i);
+                    Object p = paramsAsJson.get(jsonParamIndex);
                     if (p instanceof Float || p instanceof Double) 
-                        myStatement.bindDouble(i + 1, paramsAsJson.getDouble(i));
+                        myStatement.bindDouble(i + 1, paramsAsJson.getDouble(jsonParamIndex));
                     else if (p instanceof Number) 
-                        myStatement.bindLong(i + 1, paramsAsJson.getLong(i));
+                        myStatement.bindLong(i + 1, paramsAsJson.getLong(jsonParamIndex));
                     else
-                        myStatement.bindTextNativeString(i + 1, paramsAsJson.getString(i));
+                        myStatement.bindTextNativeString(i + 1, paramsAsJson.getString(jsonParamIndex));
                 }
             }
 
+            long lastTotal = mydbc.getTotalChanges();
             hasRows = myStatement.step();
+
+            newTotal = mydbc.getTotalChanges();
+            rowsAffected = newTotal - lastTotal;
+
+            if (rowsAffected > 0)
+                insertId = mydbc.getLastInsertRowid();
+
         } catch (Exception ex) {
             ex.printStackTrace();
-            String errorMessage = ex.getMessage();
-            Log.v("executeSqlBatch", "SQLitePlugin.executeSql[Batch](): Error=" + errorMessage);
-
-            // cleanup statement and throw the exception:
-            myStatement.dispose();
-            throw ex;
+            errorMessage = ex.getMessage();
+            Log.e("executeSqlBatch", "SQLitePlugin.executeSql[Batch](): Error=" + errorMessage);
         }
 
         // If query result has rows
         if (hasRows) {
-            JSONArray rowsArrayResult = new JSONArray();
             String key = "";
             int colCount = myStatement.getColumnCount();
 
+            // XXX ASSUMPTION: in this case insertId & rowsAffected would not apply here
+            batchResultsList.put("okrows");
+
             // Build up JSON result object for each row
             do {
-                JSONObject row = new JSONObject();
                 try {
+                    batchResultsList.put(colCount);
+
                     for (int i = 0; i < colCount; ++i) {
                         key = myStatement.getColumnName(i);
+                        batchResultsList.put(key);
 
                         switch (myStatement.getColumnType(i)) {
                         case SQLColumnType.NULL:
-                            row.put(key, JSONObject.NULL);
+                            batchResultsList.put(JSONObject.NULL);
                             break;
 
                         case SQLColumnType.REAL:
-                            row.put(key, myStatement.getColumnDouble(i));
+                            batchResultsList.put(myStatement.getColumnDouble(i));
                             break;
 
                         case SQLColumnType.INTEGER:
-                            row.put(key, myStatement.getColumnLong(i));
+                            batchResultsList.put(myStatement.getColumnLong(i));
                             break;
 
-                        case SQLColumnType.BLOB:
-                        case SQLColumnType.TEXT:
-                        default: // (just in case)
-                            row.put(key, myStatement.getColumnTextNativeString(i));
+                        // For TEXT & BLOB:
+                        default:
+                            batchResultsList.put(myStatement.getColumnTextNativeString(i));
                         }
 
                     }
 
-                    rowsArrayResult.put(row);
-
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    // TODO what to do?
                 }
             } while (myStatement.step());
 
-            try {
-                rowsResult.put("rows", rowsArrayResult);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            batchResultsList.put("endrows");
+        } else if (errorMessage != null) {
+            batchResultsList.put("errormessage");
+            batchResultsList.put(errorMessage);
+        } else if (rowsAffected > 0) {
+            batchResultsList.put("ch2");
+            batchResultsList.put(rowsAffected);
+            batchResultsList.put(insertId);
+        } else {
+            batchResultsList.put("ok");
         }
 
-        myStatement.dispose();
-
-        return rowsResult;
+        if (myStatement != null) myStatement.dispose();
     }
 
     private class DBRunner implements Runnable {
@@ -518,7 +477,7 @@ public class SQLitePlugin extends CordovaPlugin {
                 dbq = q.take();
 
                 while (!dbq.stop) {
-                    executeSqlBatch(mydbc, dbq.queries, dbq.jsonparams, dbq.queryIDs, dbq.cbc);
+                    executeSqlBatch(mydbc, dbq.queries, dbq.flatlist, dbq.cbc);
 
                     dbq = q.take();
                 }
@@ -563,17 +522,15 @@ public class SQLitePlugin extends CordovaPlugin {
         final boolean close;
         final boolean delete;
         final String[] queries;
-        final String[] queryIDs;
-        final JSONArray[] jsonparams;
+        final JSONArray flatlist;
         final CallbackContext cbc;
 
-        DBQuery(String[] myqueries, String[] qids, JSONArray[] params, CallbackContext c) {
+        DBQuery(String[] myqueries, JSONArray flatlist, CallbackContext c) {
             this.stop = false;
             this.close = false;
             this.delete = false;
             this.queries = myqueries;
-            this.queryIDs = qids;
-            this.jsonparams = params;
+            this.flatlist = flatlist;
             this.cbc = c;
         }
 
@@ -582,8 +539,7 @@ public class SQLitePlugin extends CordovaPlugin {
             this.close = true;
             this.delete = delete;
             this.queries = null;
-            this.queryIDs = null;
-            this.jsonparams = null;
+            this.flatlist = null;
             this.cbc = cbc;
         }
 
@@ -593,8 +549,7 @@ public class SQLitePlugin extends CordovaPlugin {
             this.close = false;
             this.delete = false;
             this.queries = null;
-            this.queryIDs = null;
-            this.jsonparams = null;
+            this.flatlist = null;
             this.cbc = null;
         }
     }

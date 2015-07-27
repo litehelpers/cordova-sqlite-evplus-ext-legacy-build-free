@@ -2,6 +2,9 @@
  * Copyright (c) 2012-2015, Chris Brody
  * Copyright (c) 2005-2010, Nitobi Software Inc.
  * Copyright (c) 2010, IBM Corporation
+ *
+ * License for this version: GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license.
+ * Contact for commercial license: info@litehelpers.net
  */
 
 package io.liteglue;
@@ -16,8 +19,6 @@ import java.lang.Number;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-//import java.util.regex.Matcher;
-//import java.util.regex.Pattern;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -25,11 +26,6 @@ import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-//import java.io.FileOutputStream;
-//import java.io.InputStream;
-//import java.io.OutputStream;
-//import java.io.IOException;
 
 public class SQLitePlugin extends CordovaPlugin {
 

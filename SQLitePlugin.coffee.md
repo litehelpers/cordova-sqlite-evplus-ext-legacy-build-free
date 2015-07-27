@@ -1,8 +1,11 @@
 # SQLite plugin in Markdown (litcoffee)
 
-#### Use coffee compiler to compile this directly into Javascript
+    ###
+    License for this version: GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license.
+    Contact for commercial license: info@litehelpers.net
+    ###
 
-#### License for common script: MIT or Apache
+#### Use coffee compiler to compile this directly into Javascript
 
 # Top-level SQLite plugin objects
 

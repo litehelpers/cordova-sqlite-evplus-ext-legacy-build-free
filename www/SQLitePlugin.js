@@ -1,3 +1,8 @@
+/*
+License for this version: GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license.
+Contact for commercial license: info@litehelpers.net
+ */
+
 (function() {
   var DB_STATE_INIT, DB_STATE_OPEN, READ_ONLY_REGEX, SQLiteFactory, SQLitePlugin, SQLitePluginTransaction, argsArray, dblocations, newSQLError, nextTick, root, txLocks;
 

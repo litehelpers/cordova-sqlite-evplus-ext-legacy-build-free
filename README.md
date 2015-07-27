@@ -2,9 +2,7 @@
  
 Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, and Windows "Universal" (8.1) with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
 
-License for Android and Windows "Universal" (8.1) versions: MIT or Apache 2.0
-
-License for iOS version: MIT only
+This version is available under GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license. Contact for commercial license: info@litehelpers.net
 
 TBD description of this version branch
 

@@ -1,4 +1,4 @@
-# Cordova/PhoneGap sqlite storage - enterprise ~~common~~ version with Android memory fix
+# Cordova/PhoneGap sqlite storage - free enterprise version with Android memory fix
  
 Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, and Windows "Universal" (8.1) with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
 
@@ -288,7 +288,7 @@ These installation instructions are based on the Android example project from Co
 
  - Install `SQLitePlugin.js` from `www` into `assets/www`
  - Install `SQLitePlugin.java` from `src/android/io/liteglue` into `src/io/liteglue` subdirectory
- - XXX TODO from `src/common`: Install the `libs` subtree with `sqlite-connector.jar` and `sqlite-native-driver.jar` into your Android project
+ - Install the `libs` subtree from `common` with `sqlite-connector.jar` and `sqlite-native-driver.jar` into your Android project
  - Add the plugin element `<plugin name="SQLitePlugin" value="io.liteglue.SQLitePlugin"/>` to `res/xml/config.xml`
 
 Sample change to `res/xml/config.xml` for Cordova/PhoneGap 2.x:
@@ -532,7 +532,12 @@ The adapter is now part of [PouchDB](http://pouchdb.com/) thanks to [@nolanlawso
   - Always use `git mv` to move files & directories;
   - Never mix a move/rename operation with any other changes in the same commit.
 
-## Major branches
+# External sources
+
+- https://github.com/liteglue/Android-sqlite-connector
+- https://github.com/liteglue/Android-sqlite-native-driver
+
+# Major branches
 
 TBD fix for this version:
 

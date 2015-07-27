@@ -17,6 +17,7 @@
 - Fixes to support old Android versions by @nolanlawson
 - Thanks to Mark Oppenheim <mark.oppenheim@mnetics.co.uk> for fixes to open/close callbacks and repeated open/close/delete operations
 - Android JSON memory fix by @brodybits (Chris Brody)
+- Android-sqlite-connector and Android-sqlite-native-driver by @brodybits (Chris Brody)
 
 ## iOS version
 

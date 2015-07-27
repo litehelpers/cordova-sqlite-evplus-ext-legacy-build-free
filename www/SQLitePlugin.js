@@ -184,7 +184,7 @@ Contact for commercial license: info@litehelpers.net
           var txLock;
           console.log('OPEN database: ' + _this.dbname + ' OK');
           if (!!a1 && a1 === 'a1') {
-            console.log('Detected Android version with flat JSON interface');
+            console.log('Detected Android/iOS version with flat JSON interface');
             useflatjson = true;
           }
           if (!_this.openDBs[_this.dbname]) {

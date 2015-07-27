@@ -223,7 +223,7 @@
           # Needed to distinguish between Android version (with flat JSON batch sql interface) and
           # other versions (JSON batch interface unchanged)
           if !!a1 and a1 == 'a1'
-            console.log 'Detected Android version with flat JSON interface'
+            console.log 'Detected Android/iOS version with flat JSON interface'
             useflatjson = true
 
           #if !@openDBs[@dbname] then call open error cb, and abort pending tx if any

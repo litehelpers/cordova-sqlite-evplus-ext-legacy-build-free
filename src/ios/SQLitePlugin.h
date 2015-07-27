@@ -2,8 +2,8 @@
  * Copyright (C) 2012-2015 Chris Brody
  * Copyright (C) 2011 Davide Bertola
  *
- * This library is available under the terms of the MIT License (2008).
- * See http://opensource.org/licenses/alphabetical for full text.
+ * License for this version: GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license.
+ * Contact for commercial license: info@litehelpers.net
  */
 
 #import <Cordova/CDVPlugin.h>
@@ -39,17 +39,8 @@ typedef int WebSQLError;
 -(void) backgroundExecuteSqlBatch: (CDVInvokedUrlCommand*)command;
 -(void) executeSqlBatch: (CDVInvokedUrlCommand*)command;
 
-// Single requests interface
--(void) backgroundExecuteSql:(CDVInvokedUrlCommand*)command;
--(void) executeSql:(CDVInvokedUrlCommand*)command;
-
-// Perform the SQL request
--(CDVPluginResult*) executeSqlWithDict: (NSMutableDictionary*)dict andArgs: (NSMutableDictionary*)dbargs;
-
 -(id) getDBPath:(NSString *)dbFile at:(NSString *)atkey;
 
 +(NSDictionary *)captureSQLiteErrorFromDb:(struct sqlite3 *)db;
-
-+(int)mapSQLiteErrorCode:(int)code;
 
 @end /* vim: set expandtab : */

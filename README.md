@@ -10,6 +10,8 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 ## Status
 
+- Free support is available in public locations such as [litehelpers / Cordova-sqlite-enterprise-free / issues](https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues) and https://gitter.im/litehelpers/Cordova-sqlite-storage; commercial support is available by contacting: info@litehelpers.net
+- Patches patches will *NOT* be accepted on this project due to potential licensing issues.
 - Features omitted from this version branch: pre-populated database support, REGEXP extension for iOS, WP(7/8) and Amazon Fire-OS support
 - Windows "Universal" (8.1) version is in an experimental/pre-alpha state:
   - Database close and delete operations not yet implemented
@@ -442,17 +444,25 @@ If you have an issue with the plugin please check the following first:
 - You have included the correct version of the cordova Javascript and SQLitePlugin.js and got the path right.
 - You have registered the plugin properly in `config.xml`.
 
-If you still cannot get something to work:
+If you still cannot get something to work, please create a fresh, clean Cordova project, add this plugin according to the instructions above, and try a simple test program.
+
+If you continue to see the issue in a fresh, clean Cordova project:
 - Make the simplest test program you can to demonstrate the issue, including the following characteristics:
   - it completely self-contained, i.e. it is using no extra libraries beyond cordova & SQLitePlugin.js;
   - if the issue is with *adding* data to a table, that the test program includes the statements you used to open the database and create the table;
   - if the issue is with *retrieving* data from a table, that the test program includes the statements you used to open the database, create the table, and enter the data you are trying to retrieve.
 
-Then you can [raise the new issue](https://github.com/litehelpers/Cordova-sqlite-storage/issues/new).
+Then you can [raise the new issue](https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues/new).
  
 ## Community forum
 
-TBD
+The following public discussion forums are available:
+- [litehelpers / Cordova-sqlite-enterprise-free / issues](https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues)
+- https://gitter.im/litehelpers/Cordova-sqlite-storage
+
+## Commercial support
+
+You may contact info@litehelpers.net
 
 # Unit tests
 
@@ -522,18 +532,10 @@ The adapter is now part of [PouchDB](http://pouchdb.com/) thanks to [@nolanlawso
 
 # Contributing
 
-**WARNING:** Please do NOT propose changes from your `master` branch. In general, contributions are rebased using `git rebase` or `git cherry-pick` and not merged.
-
 - Testimonials of apps that are using this plugin would be especially helpful.
-- Reporting issues at [litehelpers / Cordova-sqlite-storage / issues](https://github.com/litehelpers/Cordova-sqlite-storage/issues) can help improve the quality of this plugin.
-- Patches with bug fixes are helpful, especially when submitted with test code.
-- Other enhancements welcome for consideration, when submitted with test code and are working for all supported platforms. Increase of complexity should be avoided.
-- All contributions may be reused by [@brodybits (Chris Brody)](https://github.com/brodybits) under another license in the future. Efforts will be taken to give credit for major contributions but it will not be guaranteed.
-- Project restructuring, i.e. moving files and/or directories around, should be avoided if possible.
-- If you see a need for restructuring, it is better to first discuss it in the forum at [Ost.io / @litehelpers / Cordova-sqlite-storage](http://ost.io/@litehelpers/Cordova-sqlite-storage) (or in a [new issue](https://github.com/litehelpers/Cordova-sqlite-storage/issues/new)) where alternatives can be discussed before reaching a conclusion. If you want to propose a change to the project structure:
-  - Remember to make (and use) a special branch within your fork from which you can send the proposed restructuring;
-  - Always use `git mv` to move files & directories;
-  - Never mix a move/rename operation with any other changes in the same commit.
+- Reporting issues at [litehelpers / Cordova-sqlite-enterprise-free / issues](https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues) can help improve the quality of this plugin.
+
+**NOTE:** As stated above, patches will *NOT* be accepted on this project due to potential licensing issues. Issues with reproduction scenarios will help maintain and improve the quality of this plugin for future users.
 
 ## Major branches
 
@@ -542,4 +544,8 @@ TBD fix for this version:
 - `cordova-sqlite-common`~~/`common-src`~~ - source for Android (*not* using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)), iOS, Windows (8.1), and Amazon Fire-OS versions (shared with [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter))
 - `evfree-rc` - pre-release of free enterprise version for all supported platforms, including library dependencies for Android, Windows (8.1), and WP(7/8)
 - [FUTURE TBD] ~~`master` - version for release, to be included in PhoneGap build.~~
+
+## Contact
+
+info@litehelpers.net
 

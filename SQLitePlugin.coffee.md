@@ -21,6 +21,12 @@
     DB_STATE_INIT = "INIT"
     DB_STATE_OPEN = "OPEN"
 
+    ###
+    Transaction SQL chunking
+    MAX_SQL_CHUNK is adjustable, set to 0 (or -1) to disable chunking
+    ###
+    MAX_SQL_CHUNK = 100
+
 ## global(s):
 
     # per-db map of locking and queueing
@@ -328,13 +334,17 @@
     SQLitePluginTransaction::start = ->
       try
         @fn this
-        @run()
+
+        if @executes.length > 0
+          @run()
+
       catch err
         # If "fn" throws, we must report the whole transaction as failed.
         txLocks[@db.dbname].inProgress = false
         @db.startNextTransaction()
         if @error
           @error newSQLError err
+
       return
 
     SQLitePluginTransaction::executeSql = (sql, values, success, error) ->
@@ -370,6 +380,9 @@
 
         sql: sql
         params: params
+
+      if MAX_SQL_CHUNK > 0 && @executes.length > MAX_SQL_CHUNK
+        @run()
 
       return
 

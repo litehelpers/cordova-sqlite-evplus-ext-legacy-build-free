@@ -4,7 +4,7 @@ Contact for commercial license: info@litehelpers.net
  */
 
 (function() {
-  var DB_STATE_INIT, DB_STATE_OPEN, READ_ONLY_REGEX, SQLiteFactory, SQLitePlugin, SQLitePluginTransaction, argsArray, dblocations, newSQLError, nextTick, root, txLocks, useflatjson;
+  var DB_STATE_INIT, DB_STATE_OPEN, MAX_SQL_CHUNK, READ_ONLY_REGEX, SQLiteFactory, SQLitePlugin, SQLitePluginTransaction, argsArray, dblocations, newSQLError, nextTick, root, txLocks, useflatjson;
 
   root = this;
 
@@ -13,6 +13,14 @@ Contact for commercial license: info@litehelpers.net
   DB_STATE_INIT = "INIT";
 
   DB_STATE_OPEN = "OPEN";
+
+
+  /*
+  Transaction SQL chunking
+  MAX_SQL_CHUNK is adjustable, set to 0 (or -1) to disable chunking
+   */
+
+  MAX_SQL_CHUNK = 100;
 
   txLocks = {};
 
@@ -155,12 +163,12 @@ Contact for commercial license: info@litehelpers.net
   };
 
   SQLitePlugin.prototype.abortAllPendingTransactions = function() {
-    var tx, txLock, _i, _len, _ref;
+    var l, len1, ref, tx, txLock;
     txLock = txLocks[this.dbname];
     if (!!txLock && txLock.queue.length > 0) {
-      _ref = txLock.queue;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        tx = _ref[_i];
+      ref = txLock.queue;
+      for (l = 0, len1 = ref.length; l < len1; l++) {
+        tx = ref[l];
         tx.abortFromQ(newSQLError('Invalid database handle'));
       }
       txLock.queue = [];
@@ -293,7 +301,9 @@ Contact for commercial license: info@litehelpers.net
     var err;
     try {
       this.fn(this);
-      this.run();
+      if (this.executes.length > 0) {
+        this.run();
+      }
     } catch (_error) {
       err = _error;
       txLocks[this.db.dbname].inProgress = false;
@@ -322,11 +332,11 @@ Contact for commercial license: info@litehelpers.net
   };
 
   SQLitePluginTransaction.prototype.addStatement = function(sql, values, success, error) {
-    var params, t, v, _i, _len;
+    var l, len1, params, t, v;
     params = [];
     if (!!values && values.constructor === Array) {
-      for (_i = 0, _len = values.length; _i < _len; _i++) {
-        v = values[_i];
+      for (l = 0, len1 = values.length; l < len1; l++) {
+        v = values[l];
         t = typeof v;
         params.push((v === null || v === void 0 || t === 'number' || t === 'string' ? v : v instanceof Blob ? v.valueOf() : v.toString()));
       }
@@ -337,6 +347,9 @@ Contact for commercial license: info@litehelpers.net
       sql: sql,
       params: params
     });
+    if (MAX_SQL_CHUNK > 0 && this.executes.length > MAX_SQL_CHUNK) {
+      this.run();
+    }
   };
 
   SQLitePluginTransaction.prototype.handleStatementSuccess = function(handler, response) {
@@ -408,7 +421,7 @@ Contact for commercial license: info@litehelpers.net
   };
 
   SQLitePluginTransaction.prototype.run_batch_flatjson = function(batchExecutes, handlerFor) {
-    var flatlist, i, mycb, mycbmap, p, request, _i, _len, _ref;
+    var flatlist, i, l, len1, mycb, mycbmap, p, ref, request;
     flatlist = [];
     mycbmap = {};
     i = 0;
@@ -420,9 +433,9 @@ Contact for commercial license: info@litehelpers.net
       };
       flatlist.push(request.sql);
       flatlist.push(request.params.length);
-      _ref = request.params;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        p = _ref[_i];
+      ref = request.params;
+      for (l = 0, len1 = ref.length; l < len1; l++) {
+        p = ref[l];
         flatlist.push(p);
       }
       i++;

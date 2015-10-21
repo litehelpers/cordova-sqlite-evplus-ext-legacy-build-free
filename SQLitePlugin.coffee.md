@@ -22,10 +22,10 @@
     DB_STATE_OPEN = "OPEN"
 
     ###
-    Transaction SQL chunking
+    OPTIONAL: Transaction SQL chunking
     MAX_SQL_CHUNK is adjustable, set to 0 (or -1) to disable chunking
     ###
-    MAX_SQL_CHUNK = 100
+    MAX_SQL_CHUNK = 0
 
 ## global(s):
 

@@ -31,7 +31,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 - This version has the following memory improvements:
   - flat JSON interface between Javascript and native parts
-  - transaction sql chunking, which can be adjusted or disabled by changing the `MAX_SQL_CHUNK` value in SQLitePlugin.js
+  - *optional*: transaction sql chunking, which can be enabled by changing the `MAX_SQL_CHUNK` value in SQLitePlugin.js
 - Android version is now using the lightweight [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)
 - Windows "Universal" version now supports both Windows 8.1 and Windows Phone 8.1
 - iOS version is now fixed to override the correct pluginInitialize method and should work with recent versions of iOS

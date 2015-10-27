@@ -22,10 +22,10 @@
     DB_STATE_OPEN = "OPEN"
 
     ###
-    Transaction SQL chunking
+    OPTIONAL: Transaction SQL chunking
     MAX_SQL_CHUNK is adjustable, set to 0 (or -1) to disable chunking
     ###
-    MAX_SQL_CHUNK = 100
+    MAX_SQL_CHUNK = 0
 
 ## global(s):
 
@@ -147,6 +147,20 @@
           # XXX TBD TODO: in this case (which should not happen), should abort and discard the transaction.
           console.log 'database is closed, new transaction is [stuck] waiting until db is opened again!'
       return
+
+    SQLitePlugin::beginTransaction = (error) ->
+      if !@openDBs[@dbname]
+        throw newSQLError 'database not open'
+
+      myfn = (tx) -> return
+      mytx = new SQLitePluginTransaction(this, myfn, error, null, false, false)
+      mytx.canPause = true
+      mytx.addStatement "BEGIN", [], null, (tx, err) ->
+        throw newSQLError "unable to begin transaction: " + err.message, err.code
+      mytx.txlock = true
+      @addTransaction mytx
+
+      mytx
 
     SQLitePlugin::transaction = (fn, error, success) ->
       # FUTURE TBD check for valid fn here
@@ -323,6 +337,8 @@
       @success = success
       @txlock = txlock
       @readOnly = readOnly
+      @canPause = false
+      @isPaused = false
       @executes = []
 
       if txlock
@@ -358,7 +374,35 @@
         return
 
       @addStatement(sql, values, success, error)
+
+      if @isPaused
+        @isPaused = false
+        @run()
+
       return
+
+    SQLitePluginTransaction::end = (success, error) ->
+      if !@canPause
+        throw newSQLError 'Sorry invalid usage'
+
+      @canPause = false
+      @success = success
+      @error = error
+      if @isPaused
+        @isPaused = false
+        @run()
+
+    SQLitePluginTransaction::abort = (errorcb) ->
+      if !@canPause
+        throw newSQLError 'Sorry invalid usage'
+
+      @canPause = false
+      @error = errorcb
+      @addStatement 'INVALID STATEMENT', [], null, null
+
+      if @isPaused
+        @isPaused = false
+        @run()
 
     # This method adds the SQL statement to the transaction queue but does not check for
     # finalization since it is used to execute COMMIT and ROLLBACK.
@@ -428,20 +472,25 @@
             if didSucceed
               tx.handleStatementSuccess batchExecutes[index].success, response
             else
-              tx.handleStatementFailure batchExecutes[index].error, newSQLError(response)
+              sqlError = newSQLError(response)
+              sqlError.code = response.result.code
+              sqlError.sqliteCode = response.result.sqliteCode
+              tx.handleStatementFailure batchExecutes[index].error, sqlError
           catch err
             if !txFailure
               txFailure = newSQLError(err)
 
           if --waiting == 0
             if txFailure
-              tx.abort txFailure
+              tx.$abort txFailure
             else if tx.executes.length > 0
               # new requests have been issued by the callback
               # handlers, so run another batch.
               tx.run()
+            else if tx.canPause
+              tx.isPaused = true
             else
-              tx.finish()
+              tx.$finish()
 
           return
 
@@ -451,7 +500,7 @@
         @run_batch batchExecutes, handlerFor
       return
 
-    # version for Android (with flat JSON interface)
+    # version for Android and iOS (with flat JSON interface)
     SQLitePluginTransaction::run_batch_flatjson = (batchExecutes, handlerFor) ->
       flatlist = []
       mycbmap = {}
@@ -519,9 +568,15 @@
             q.success { rows: rows, rowsAffected: changes, insertId: insert_id }
             ++ri
 
-          else if r == 'errormessage'
+          else if r == 'error'
+            code = result[ri++]
+            sqliteCode = result[ri++]
             errormessage = result[ri++]
-            q.error { result: { message: errormessage } }
+            q.error
+              result:
+                code: code
+                sqliteCode: sqliteCode
+                message: errormessage
 
           ++i
 
@@ -575,7 +630,7 @@
 
       return
 
-    SQLitePluginTransaction::abort = (txFailure) ->
+    SQLitePluginTransaction::$abort = (txFailure) ->
       if @finalized then return
       tx = @
 
@@ -601,7 +656,7 @@
 
       return
 
-    SQLitePluginTransaction::finish = ->
+    SQLitePluginTransaction::$finish = ->
       if @finalized then return
       tx = @
 

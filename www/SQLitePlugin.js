@@ -16,11 +16,11 @@ Contact for commercial license: info@litehelpers.net
 
 
   /*
-  Transaction SQL chunking
+  OPTIONAL: Transaction SQL chunking
   MAX_SQL_CHUNK is adjustable, set to 0 (or -1) to disable chunking
    */
 
-  MAX_SQL_CHUNK = 100;
+  MAX_SQL_CHUNK = 0;
 
   txLocks = {};
 
@@ -122,6 +122,22 @@ Contact for commercial license: info@litehelpers.net
         console.log('database is closed, new transaction is [stuck] waiting until db is opened again!');
       }
     }
+  };
+
+  SQLitePlugin.prototype.beginTransaction = function(error) {
+    var myfn, mytx;
+    if (!this.openDBs[this.dbname]) {
+      throw newSQLError('database not open');
+    }
+    myfn = function(tx) {};
+    mytx = new SQLitePluginTransaction(this, myfn, error, null, false, false);
+    mytx.canPause = true;
+    mytx.addStatement("BEGIN", [], null, function(tx, err) {
+      throw newSQLError("unable to begin transaction: " + err.message, err.code);
+    });
+    mytx.txlock = true;
+    this.addTransaction(mytx);
+    return mytx;
   };
 
   SQLitePlugin.prototype.transaction = function(fn, error, success) {
@@ -289,6 +305,8 @@ Contact for commercial license: info@litehelpers.net
     this.success = success;
     this.txlock = txlock;
     this.readOnly = readOnly;
+    this.canPause = false;
+    this.isPaused = false;
     this.executes = [];
     if (txlock) {
       this.addStatement("BEGIN", [], null, function(tx, err) {
@@ -329,6 +347,36 @@ Contact for commercial license: info@litehelpers.net
       return;
     }
     this.addStatement(sql, values, success, error);
+    if (this.isPaused) {
+      this.isPaused = false;
+      this.run();
+    }
+  };
+
+  SQLitePluginTransaction.prototype.end = function(success, error) {
+    if (!this.canPause) {
+      throw newSQLError('Sorry invalid usage');
+    }
+    this.canPause = false;
+    this.success = success;
+    this.error = error;
+    if (this.isPaused) {
+      this.isPaused = false;
+      return this.run();
+    }
+  };
+
+  SQLitePluginTransaction.prototype.abort = function(errorcb) {
+    if (!this.canPause) {
+      throw newSQLError('Sorry invalid usage');
+    }
+    this.canPause = false;
+    this.error = errorcb;
+    this.addStatement('INVALID STATEMENT', [], null, null);
+    if (this.isPaused) {
+      this.isPaused = false;
+      return this.run();
+    }
   };
 
   SQLitePluginTransaction.prototype.addStatement = function(sql, values, success, error) {
@@ -389,12 +437,15 @@ Contact for commercial license: info@litehelpers.net
     tx = this;
     handlerFor = function(index, didSucceed) {
       return function(response) {
-        var err;
+        var err, sqlError;
         try {
           if (didSucceed) {
             tx.handleStatementSuccess(batchExecutes[index].success, response);
           } else {
-            tx.handleStatementFailure(batchExecutes[index].error, newSQLError(response));
+            sqlError = newSQLError(response);
+            sqlError.code = response.result.code;
+            sqlError.sqliteCode = response.result.sqliteCode;
+            tx.handleStatementFailure(batchExecutes[index].error, sqlError);
           }
         } catch (_error) {
           err = _error;
@@ -404,11 +455,13 @@ Contact for commercial license: info@litehelpers.net
         }
         if (--waiting === 0) {
           if (txFailure) {
-            tx.abort(txFailure);
+            tx.$abort(txFailure);
           } else if (tx.executes.length > 0) {
             tx.run();
+          } else if (tx.canPause) {
+            tx.isPaused = true;
           } else {
-            tx.finish();
+            tx.$finish();
           }
         }
       };
@@ -441,7 +494,7 @@ Contact for commercial license: info@litehelpers.net
       i++;
     }
     mycb = function(result) {
-      var c, changes, errormessage, insert_id, j, k, q, r, ri, rl, row, rows, v;
+      var c, changes, code, errormessage, insert_id, j, k, q, r, ri, rl, row, rows, sqliteCode, v;
       i = 0;
       ri = 0;
       rl = result.length;
@@ -489,10 +542,14 @@ Contact for commercial license: info@litehelpers.net
             insertId: insert_id
           });
           ++ri;
-        } else if (r === 'errormessage') {
+        } else if (r === 'error') {
+          code = result[ri++];
+          sqliteCode = result[ri++];
           errormessage = result[ri++];
           q.error({
             result: {
+              code: code,
+              sqliteCode: sqliteCode,
               message: errormessage
             }
           });
@@ -556,7 +613,7 @@ Contact for commercial license: info@litehelpers.net
     ]);
   };
 
-  SQLitePluginTransaction.prototype.abort = function(txFailure) {
+  SQLitePluginTransaction.prototype.$abort = function(txFailure) {
     var failed, succeeded, tx;
     if (this.finalized) {
       return;
@@ -585,7 +642,7 @@ Contact for commercial license: info@litehelpers.net
     }
   };
 
-  SQLitePluginTransaction.prototype.finish = function() {
+  SQLitePluginTransaction.prototype.$finish = function() {
     var failed, succeeded, tx;
     if (this.finalized) {
       return;

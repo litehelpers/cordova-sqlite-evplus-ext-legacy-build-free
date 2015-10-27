@@ -29,6 +29,8 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
  
 ## Announcements
 
+- This version has the following API improvement(s):
+  - Multi-part transactions API (described below)
 - This version has the following memory improvements:
   - flat JSON interface between Javascript and native parts
   - *optional*: transaction sql chunking, which can be enabled by changing the `MAX_SQL_CHUNK` value in SQLitePlugin.js
@@ -131,6 +133,62 @@ function onDeviceReady() {
 ```
 
 **NOTE:** The database file name should include the extension, if desired.
+
+## SQL transactions
+
+The following types of SQL transactions are supported by this version:
+- Single-statement transactions
+- Standard asynchronous transactions
+- Multi-part transactions
+
+### Single-statement transactions
+
+Sample:
+
+```Javascript
+db.executeSql("select length('tenletters') as stringlength", [], function (res) {
+  var stringlength = res.rows.item(0).stringlength;
+  console.log('got stringlength: ' + stringlength);
+});
+```
+
+### Multi-part transactions
+
+Sample:
+
+```Javascript
+var tx = db.beginTransaction();
+tx.executeSql("DROP TABLE IF EXISTS mytable");
+tx.executeSql("CREATE TABLE mytable (myfield)");
+
+tx.executeSql("INSERT INTO mytable values(?)", ['test value']);
+tx.executeSql("SELECT * from mytable", [], function(tx, res) {
+  console.log("Got value: " + res.rows.item(0).myfield);
+}, function(e) {
+  console.log("Ignore unexpected error callback with message: " + e.message);
+  return false;
+});
+
+tx.end(function() {
+  console.log('Optional success callback');
+}, function(e) {
+  console.log("Optional error callback with message: " + e.message);
+});
+```
+
+Sample with abort:
+
+```Javascript
+var tx = db.beginTransaction();
+tx.executeSql("INSERT INTO mytable values(?)", ['wrong data']);
+tx.abort(function() {
+  console.log('Optional callback');
+});
+```
+
+IMPORTANT NOTES:
+- In case a `tx.executeSql` call results in an error and it does not have an error callback or the error callback does NOT return `false`, the transaction will be aborted with a ROLLBACK upon the `tx.end` call.
+- When a multi-part transaction is started by the `db.beginTransaction` call, all other transactions are blocked until the multi-part transaction is either completed successfully or aborted (with a ROLLBACK).
 
 ## Background processing
 
@@ -242,30 +300,20 @@ As an alternative, which will support the ("Mixed Platforms") target, you can us
 - Create your Windows "Universal" (8.1) project using [litehelpers / cordova-windows-nufix](https://github.com/litehelpers/cordova-windows-nufix):
   - `path.to.cordova-windows-nufix/bin/create.bat your_app_path your.app.id YourAppName`
 - `cd your_app_path` and install plugin using `plugman`:
-  - `plugman install --platform windows --project . --plugin https://github.com/litehelpers/cordova-sqlite-common`
+  - `plugman install --platform windows --project . --plugin https://github.com/litehelpers/Cordova-sqlite-enterprise-free`
 - Put your sql program in your project `www` (don't forget to reference it from `www\index.html` and wait for `deviceready` event)
 
 Then your project in `CordovaApp.sln` should work with "Mixed Platforms" on both Windows 8.1 and Windows Phone 8.1.
-
-## Easy install with plugman tool
-
-```shell
-plugman install --platform MYPLATFORM --project path.to.my.project.folder --plugin https://github.com/litehelpers/cordova-sqlite-common
-```
-
-where MYPLATFORM is `android`, `ios`, or `windows`.
-
-A posting how to get started developing on Windows host without the Cordova CLI tool (for Android target only) is available [here](http://brodybits.blogspot.com/2015/03/trying-cordova-for-android-on-windows-without-cordova-cli.html).
 
 ## Easy install with Cordova CLI tool
 
     npm install -g cordova # if you don't have cordova
     cordova create MyProjectFolder com.my.project MyProject && cd MyProjectFolder # if you are just starting
-    cordova plugin add https://github.com/litehelpers/cordova-sqlite-common
+    cordova plugin add https://github.com/litehelpers/Cordova-sqlite-enterprise-free
  
 You can find more details at [this writeup](http://iphonedevlog.wordpress.com/2014/04/07/installing-chris-brodys-sqlite-database-with-cordova-cli-android/).
 
-**WARNING:** for Windows target platform please read the section above.
+**WARNING:** for Windows target platform please read the section below.
 
 **IMPORTANT:** sometimes you have to update the version for a platform before you can build, like: `cordova prepare ios`
 
@@ -273,6 +321,16 @@ You can find more details at [this writeup](http://iphonedevlog.wordpress.com/20
 
     cordova platform rm ios
     cordova platform add ios
+
+## Easy install with plugman tool
+
+```shell
+plugman install --platform MYPLATFORM --project path.to.my.project.folder --plugin https://github.com/litehelpers/Cordova-sqlite-enterprise-free
+```
+
+where MYPLATFORM is `android`, `ios`, or `windows`.
+
+A posting how to get started developing on Windows host without the Cordova CLI tool (for Android target only) is available [here](http://brodybits.blogspot.com/2015/03/trying-cordova-for-android-on-windows-without-cordova-cli.html).
 
 ## Source tree
 

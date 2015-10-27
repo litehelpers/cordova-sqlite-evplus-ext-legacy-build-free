@@ -148,6 +148,20 @@
           console.log 'database is closed, new transaction is [stuck] waiting until db is opened again!'
       return
 
+    SQLitePlugin::beginTransaction = (error) ->
+      if !@openDBs[@dbname]
+        throw newSQLError 'database not open'
+
+      myfn = (tx) -> return
+      mytx = new SQLitePluginTransaction(this, myfn, error, null, false, false)
+      mytx.canPause = true
+      mytx.addStatement "BEGIN", [], null, (tx, err) ->
+        throw newSQLError "unable to begin transaction: " + err.message, err.code
+      mytx.txlock = true
+      @addTransaction mytx
+
+      mytx
+
     SQLitePlugin::transaction = (fn, error, success) ->
       # FUTURE TBD check for valid fn here
       if !@openDBs[@dbname]
@@ -323,6 +337,8 @@
       @success = success
       @txlock = txlock
       @readOnly = readOnly
+      @canPause = false
+      @isPaused = false
       @executes = []
 
       if txlock
@@ -358,7 +374,35 @@
         return
 
       @addStatement(sql, values, success, error)
+
+      if @isPaused
+        @isPaused = false
+        @run()
+
       return
+
+    SQLitePluginTransaction::end = (success, error) ->
+      if !@canPause
+        throw newSQLError 'Sorry invalid usage'
+
+      @canPause = false
+      @success = success
+      @error = error
+      if @isPaused
+        @isPaused = false
+        @run()
+
+    SQLitePluginTransaction::abort = (errorcb) ->
+      if !@canPause
+        throw newSQLError 'Sorry invalid usage'
+
+      @canPause = false
+      @error = errorcb
+      @addStatement 'INVALID STATEMENT', [], null, null
+
+      if @isPaused
+        @isPaused = false
+        @run()
 
     # This method adds the SQL statement to the transaction queue but does not check for
     # finalization since it is used to execute COMMIT and ROLLBACK.
@@ -435,13 +479,15 @@
 
           if --waiting == 0
             if txFailure
-              tx.abort txFailure
+              tx.$abort txFailure
             else if tx.executes.length > 0
               # new requests have been issued by the callback
               # handlers, so run another batch.
               tx.run()
+            else if tx.canPause
+              tx.isPaused = true
             else
-              tx.finish()
+              tx.$finish()
 
           return
 
@@ -451,7 +497,7 @@
         @run_batch batchExecutes, handlerFor
       return
 
-    # version for Android (with flat JSON interface)
+    # version for Android and iOS (with flat JSON interface)
     SQLitePluginTransaction::run_batch_flatjson = (batchExecutes, handlerFor) ->
       flatlist = []
       mycbmap = {}
@@ -575,7 +621,7 @@
 
       return
 
-    SQLitePluginTransaction::abort = (txFailure) ->
+    SQLitePluginTransaction::$abort = (txFailure) ->
       if @finalized then return
       tx = @
 
@@ -601,7 +647,7 @@
 
       return
 
-    SQLitePluginTransaction::finish = ->
+    SQLitePluginTransaction::$finish = ->
       if @finalized then return
       tx = @
 

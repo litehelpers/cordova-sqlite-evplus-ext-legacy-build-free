@@ -124,6 +124,22 @@ Contact for commercial license: info@litehelpers.net
     }
   };
 
+  SQLitePlugin.prototype.beginTransaction = function(error) {
+    var myfn, mytx;
+    if (!this.openDBs[this.dbname]) {
+      throw newSQLError('database not open');
+    }
+    myfn = function(tx) {};
+    mytx = new SQLitePluginTransaction(this, myfn, error, null, false, false);
+    mytx.canPause = true;
+    mytx.addStatement("BEGIN", [], null, function(tx, err) {
+      throw newSQLError("unable to begin transaction: " + err.message, err.code);
+    });
+    mytx.txlock = true;
+    this.addTransaction(mytx);
+    return mytx;
+  };
+
   SQLitePlugin.prototype.transaction = function(fn, error, success) {
     if (!this.openDBs[this.dbname]) {
       error(newSQLError('database not open'));
@@ -289,6 +305,8 @@ Contact for commercial license: info@litehelpers.net
     this.success = success;
     this.txlock = txlock;
     this.readOnly = readOnly;
+    this.canPause = false;
+    this.isPaused = false;
     this.executes = [];
     if (txlock) {
       this.addStatement("BEGIN", [], null, function(tx, err) {
@@ -329,6 +347,36 @@ Contact for commercial license: info@litehelpers.net
       return;
     }
     this.addStatement(sql, values, success, error);
+    if (this.isPaused) {
+      this.isPaused = false;
+      this.run();
+    }
+  };
+
+  SQLitePluginTransaction.prototype.end = function(success, error) {
+    if (!this.canPause) {
+      throw newSQLError('Sorry invalid usage');
+    }
+    this.canPause = false;
+    this.success = success;
+    this.error = error;
+    if (this.isPaused) {
+      this.isPaused = false;
+      return this.run();
+    }
+  };
+
+  SQLitePluginTransaction.prototype.abort = function(errorcb) {
+    if (!this.canPause) {
+      throw newSQLError('Sorry invalid usage');
+    }
+    this.canPause = false;
+    this.error = errorcb;
+    this.addStatement('INVALID STATEMENT', [], null, null);
+    if (this.isPaused) {
+      this.isPaused = false;
+      return this.run();
+    }
   };
 
   SQLitePluginTransaction.prototype.addStatement = function(sql, values, success, error) {
@@ -404,11 +452,13 @@ Contact for commercial license: info@litehelpers.net
         }
         if (--waiting === 0) {
           if (txFailure) {
-            tx.abort(txFailure);
+            tx.$abort(txFailure);
           } else if (tx.executes.length > 0) {
             tx.run();
+          } else if (tx.canPause) {
+            tx.isPaused = true;
           } else {
-            tx.finish();
+            tx.$finish();
           }
         }
       };
@@ -556,7 +606,7 @@ Contact for commercial license: info@litehelpers.net
     ]);
   };
 
-  SQLitePluginTransaction.prototype.abort = function(txFailure) {
+  SQLitePluginTransaction.prototype.$abort = function(txFailure) {
     var failed, succeeded, tx;
     if (this.finalized) {
       return;
@@ -585,7 +635,7 @@ Contact for commercial license: info@litehelpers.net
     }
   };
 
-  SQLitePluginTransaction.prototype.finish = function() {
+  SQLitePluginTransaction.prototype.$finish = function() {
     var failed, succeeded, tx;
     if (this.finalized) {
       return;

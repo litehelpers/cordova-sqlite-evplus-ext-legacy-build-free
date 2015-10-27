@@ -31,6 +31,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 - This version has the following API improvement(s):
   - Multi-part transactions API (described below)
+  - Error result with proper Web SQL `code` member and `sqliteCode` as reported by the SQLite C library (Android/iOS)
 - This version has the following memory improvements:
   - flat JSON interface between Javascript and native parts
   - *optional*: transaction sql chunking, which can be enabled by changing the `MAX_SQL_CHUNK` value in SQLitePlugin.js

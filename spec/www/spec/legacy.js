@@ -1238,15 +1238,28 @@ var mytests = function() {
             }, function(tx, error) {
               ok(!!error, "valid error object");
 
-              // XXX ALSO BROKEN for iOS in this version:
-              //if (isWebSql || !(isAndroid || isWindows || isWP8))
-              //  ok(!!error['code'], "valid error.code exists");
+              // XXX NOT WORKING for Windows version of plugin:
+              if (!isWindows)
+                ok(!!error['code'], "valid error.code exists");
 
               ok(error.hasOwnProperty('message'), "error.message exists");
-              // XXX ALSO BROKEN for iOS in this version:
-              //if (isWebSql || !(isAndroid || isWindows || isWP8))
-              //  strictEqual(error.code, 5, "error.code === SQLException.SYNTAX_ERR (5)");
+
+              // XXX NOT WORKING for Web SQL or Windows version of plugin:
+              //if (!(isWebSql || isWindows))
+              // XXX NOT WORKING for Windows version of plugin:
+              if (!isWindows)
+                strictEqual(error.code, 5, "error.code === SQLException.SYNTAX_ERR (5)");
+
               //equal(error.message, "Request failed: insert into test_table (data) VALUES ,123", "error.message");
+
+              // XXX NOT WORKING for Web SQL or Windows version of plugin:
+              if (!(isWebSql || isWindows))
+                ok(!!error['sqliteCode'], "valid error.sqliteCode exists");
+
+              // XXX NOT WORKING for Web SQL or Windows version of plugin:
+              if (!(isWebSql || isWindows))
+                strictEqual(error.sqliteCode, 1, "error.sqliteCode === 1 (SQLITE_ERROR)");
+
               start();
 
               // We want this error to fail the entire transaction
@@ -1284,13 +1297,26 @@ var mytests = function() {
             }, function(tx, error) {
               ok(!!error, "valid error object");
 
-              // XXX ALSO BROKEN for iOS in this version:
-              //if (isWebSql || !(isAndroid || isWindows || isWP8))
-              //  ok(!!error['code'], "valid error.code exists");
+              // XXX NOT WORKING for Windows version of plugin:
+              if (!isWindows)
+                ok(!!error['code'], "valid error.code exists");
 
               ok(error.hasOwnProperty('message'), "error.message exists");
-              //strictEqual(error.code, 6, "error.code === SQLException.CONSTRAINT_ERR (6)");
+
+              // XXX NOT WORKING for Web SQL [iOS] or Windows version of plugin:
+              if (!(isWebSql || isWindows))
+                strictEqual(error.code, 6, "error.code === SQLException.CONSTRAINT_ERR (6)");
+
               //equal(error.message, "Request failed: insert into test_table (data) VALUES (?),123", "error.message");
+
+              // XXX NOT WORKING for Web SQL or Windows version of plugin:
+              if (!(isWebSql || isWindows))
+                ok(!!error['sqliteCode'], "valid error.sqliteCode exists");
+
+              // XXX NOT WORKING for Web SQL or Windows version of plugin:
+              if (!(isWebSql || isWindows))
+                strictEqual(error.sqliteCode, 19, "error.sqliteCode === 19 (SQLITE_CONSTRAINT)");
+
               start();
 
               // We want this error to fail the entire transaction

@@ -355,6 +355,7 @@ public class SQLitePlugin extends CordovaPlugin {
         long insertId = -1;
 
         String errorMessage = null;
+        int sqlite_error_code = -1;
 
         try {
             myStatement = mydbc.prepareStatement(query);
@@ -383,6 +384,11 @@ public class SQLitePlugin extends CordovaPlugin {
             if (rowsAffected > 0)
                 insertId = mydbc.getLastInsertRowid();
 
+        } catch (java.sql.SQLException ex) {
+            ex.printStackTrace();
+            sqlite_error_code= ex.getErrorCode();
+            errorMessage = ex.getMessage();
+            Log.e("executeSqlBatch", "SQLitePlugin.executeSql[Batch](): sqlite error code: " + sqlite_error_code + " message: " + errorMessage);
         } catch (Exception ex) {
             ex.printStackTrace();
             errorMessage = ex.getMessage();
@@ -434,7 +440,21 @@ public class SQLitePlugin extends CordovaPlugin {
 
             batchResultsList.put("endrows");
         } else if (errorMessage != null) {
-            batchResultsList.put("errormessage");
+            batchResultsList.put("error");
+            switch (sqlite_error_code) {
+            case SQLCode.ERROR:
+                batchResultsList.put(5); // SQLException.SYNTAX_ERR
+                break;
+            case 13: // SQLITE_FULL
+                batchResultsList.put(4); // SQLException.QUOTA_ERR
+                break;
+            case 19: // SQLITE_CONSTRAINT
+                batchResultsList.put(6); // SQLException.CONSTRAINT_ERR
+                break;
+            default:
+                batchResultsList.put(0); // SQLException.UNKNOWN_ERR
+            }
+            batchResultsList.put(sqlite_error_code);
             batchResultsList.put(errorMessage);
         } else if (rowsAffected > 0) {
             batchResultsList.put("ch2");

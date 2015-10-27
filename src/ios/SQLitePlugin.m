@@ -361,9 +361,9 @@
     if (error) {
         /* add error with result.message: */
 
-        // XXX FUTURE TBD: include full error object instead (??)
-        [results addObject:@"errormessage"];
-        //[results addObject:error];
+        [results addObject:@"error"];
+        [results addObject:[error objectForKey:@"code"]];
+        [results addObject:[error objectForKey:@"sqliteCode"]];
         [results addObject:[error objectForKey:@"message"]];
 
         return;
@@ -432,23 +432,19 @@
 +(NSDictionary *)captureSQLiteErrorFromDb:(struct sqlite3 *)db
 {
     int code = sqlite3_errcode(db);
-#if 0 // XXX TBD NOT USED IN THIS VERSION:
     int webSQLCode = [SQLitePlugin mapSQLiteErrorCode:code];
-#endif
-#if INCLUDE_SQLITE_ERROR_INFO
+#if 0 // XXX NOT SUPPORTED IN THIS VERSION:
     int extendedCode = sqlite3_extended_errcode(db);
 #endif
     const char *message = sqlite3_errmsg(db);
 
     NSMutableDictionary *error = [NSMutableDictionary dictionaryWithCapacity:4];
 
-#if 0 // XXX TBD NOT USED IN THIS VERSION:
     [error setObject:[NSNumber numberWithInt:webSQLCode] forKey:@"code"];
-#endif
     [error setObject:[NSString stringWithUTF8String:message] forKey:@"message"];
 
-#if INCLUDE_SQLITE_ERROR_INFO
     [error setObject:[NSNumber numberWithInt:code] forKey:@"sqliteCode"];
+#if 0 // XXX NOT SUPPORTED IN THIS VERSION:
     [error setObject:[NSNumber numberWithInt:extendedCode] forKey:@"sqliteExtendedCode"];
     [error setObject:[NSString stringWithUTF8String:message] forKey:@"sqliteMessage"];
 #endif
@@ -456,7 +452,6 @@
     return error;
 }
 
-#if 0 // XXX TBD NOT USED IN THIS VERSION:
 +(int)mapSQLiteErrorCode:(int)code
 {
     // map the sqlite error code to
@@ -472,6 +467,5 @@
             return UNKNOWN_ERR;
     }
 }
-#endif
 
 @end /* vim: set expandtab : */

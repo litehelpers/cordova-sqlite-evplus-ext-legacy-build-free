@@ -437,12 +437,15 @@ Contact for commercial license: info@litehelpers.net
     tx = this;
     handlerFor = function(index, didSucceed) {
       return function(response) {
-        var err;
+        var err, sqlError;
         try {
           if (didSucceed) {
             tx.handleStatementSuccess(batchExecutes[index].success, response);
           } else {
-            tx.handleStatementFailure(batchExecutes[index].error, newSQLError(response));
+            sqlError = newSQLError(response);
+            sqlError.code = response.result.code;
+            sqlError.sqliteCode = response.result.sqliteCode;
+            tx.handleStatementFailure(batchExecutes[index].error, sqlError);
           }
         } catch (_error) {
           err = _error;
@@ -491,7 +494,7 @@ Contact for commercial license: info@litehelpers.net
       i++;
     }
     mycb = function(result) {
-      var c, changes, errormessage, insert_id, j, k, q, r, ri, rl, row, rows, v;
+      var c, changes, code, errormessage, insert_id, j, k, q, r, ri, rl, row, rows, sqliteCode, v;
       i = 0;
       ri = 0;
       rl = result.length;
@@ -539,10 +542,14 @@ Contact for commercial license: info@litehelpers.net
             insertId: insert_id
           });
           ++ri;
-        } else if (r === 'errormessage') {
+        } else if (r === 'error') {
+          code = result[ri++];
+          sqliteCode = result[ri++];
           errormessage = result[ri++];
           q.error({
             result: {
+              code: code,
+              sqliteCode: sqliteCode,
               message: errormessage
             }
           });

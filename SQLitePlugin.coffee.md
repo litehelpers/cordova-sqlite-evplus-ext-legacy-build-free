@@ -472,7 +472,10 @@
             if didSucceed
               tx.handleStatementSuccess batchExecutes[index].success, response
             else
-              tx.handleStatementFailure batchExecutes[index].error, newSQLError(response)
+              sqlError = newSQLError(response)
+              sqlError.code = response.result.code
+              sqlError.sqliteCode = response.result.sqliteCode
+              tx.handleStatementFailure batchExecutes[index].error, sqlError
           catch err
             if !txFailure
               txFailure = newSQLError(err)
@@ -565,9 +568,15 @@
             q.success { rows: rows, rowsAffected: changes, insertId: insert_id }
             ++ri
 
-          else if r == 'errormessage'
+          else if r == 'error'
+            code = result[ri++]
+            sqliteCode = result[ri++]
             errormessage = result[ri++]
-            q.error { result: { message: errormessage } }
+            q.error
+              result:
+                code: code
+                sqliteCode: sqliteCode
+                message: errormessage
 
           ++i
 

@@ -2,7 +2,7 @@
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-sqlite-evcommon"
-    version="0.7.0-dev">
+    version="0.7.1-evcommon-dev">
 
     <name>Cordova sqlite storage enterprise (common source) with Android memory fix</name>
 
@@ -33,8 +33,13 @@
         <source-file src="src/android/io/liteglue/SQLitePlugin.java" target-dir="src/io/liteglue"/>
 
         <!-- Android-sqlite-connector: -->
-        <source-file src="src/external/sqlite-native-driver.jar" target-dir="libs"/>
-        <source-file src="src/external/sqlite-connector.jar" target-dir="libs"/>
+        <source-file src="src/external/libs/sqlite-connector.jar" target-dir="libs"/>
+        <!-- Android-sqlite-connector native driver libs: -->
+        <source-file src="src/external/libs/arm64-v8a/libsqlc-native-driver.so" target-dir="libs/arm64-v8a"/>
+        <source-file src="src/external/libs/armeabi/libsqlc-native-driver.so" target-dir="libs/armeabi"/>
+        <source-file src="src/external/libs/armeabi-v7a/libsqlc-native-driver.so" target-dir="libs/armeabi-v7a"/>
+        <source-file src="src/external/libs/x86/libsqlc-native-driver.so" target-dir="libs/x86"/>
+        <source-file src="src/external/libs/x86_64/libsqlc-native-driver.so" target-dir="libs/x86_64"/>
 
     </platform>
 

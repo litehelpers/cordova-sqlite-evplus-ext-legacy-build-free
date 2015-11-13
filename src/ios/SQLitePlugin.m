@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Chris Brody
+ * Copyright (c) 2012-2015: Christopher J. Brody (aka Chris Brody)
  * Copyright (C) 2011 Davide Bertola
  *
  * License for this version: GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license.
@@ -309,23 +309,25 @@
 
                     column_type = sqlite3_column_type(statement, i);
                     switch (column_type) {
-                        case SQLITE_NULL:
-                            columnValue = [NSNull null];
-                            break;
                         case SQLITE_INTEGER:
                             columnValue = [NSNumber numberWithLongLong: sqlite3_column_int64(statement, i)];
                             break;
                         case SQLITE_FLOAT:
                             columnValue = [NSNumber numberWithDouble: sqlite3_column_double(statement, i)];
                             break;
-                        // Handles both TEXT & BLOB:
-                        default:
+                        case SQLITE_BLOB:
+                        case SQLITE_TEXT:
                             columnValue = [[NSString alloc] initWithBytes:(char *)sqlite3_column_text(statement, i)
                                                                    length:sqlite3_column_bytes(statement, i)
                                                                  encoding:NSUTF8StringEncoding];
 #if !__has_feature(objc_arc)
                             [columnValue autorelease];
 #endif
+                            break;
+                        case SQLITE_NULL:
+                        // just in case (should not happen):
+                        default:
+                            columnValue = [NSNull null];
                             break;
                     }
 
@@ -376,16 +378,15 @@
     }
 }
 
--(void)bindStatement:(sqlite3_stmt *)statement withArg:(NSObject *)arg atIndex:(NSUInteger)argIndex
+-(void)bindStatement:(sqlite3_stmt *)statement withArg:(NSObject *)arg atIndex:(int)argIndex
 {
     if ([arg isEqual:[NSNull null]]) {
         sqlite3_bind_null(statement, argIndex);
     } else if ([arg isKindOfClass:[NSNumber class]]) {
         NSNumber *numberArg = (NSNumber *)arg;
         const char *numberType = [numberArg objCType];
-        if (strcmp(numberType, @encode(int)) == 0) {
-            sqlite3_bind_int(statement, argIndex, [numberArg integerValue]);
-        } else if (strcmp(numberType, @encode(long long int)) == 0) {
+        if (strcmp(numberType, @encode(int)) == 0 ||
+            strcmp(numberType, @encode(long long int)) == 0) {
             sqlite3_bind_int64(statement, argIndex, [numberArg longLongValue]);
         } else if (strcmp(numberType, @encode(double)) == 0) {
             sqlite3_bind_double(statement, argIndex, [numberArg doubleValue]);
@@ -401,8 +402,10 @@
             stringArg = [arg description]; // convert to text
         }
 
-        NSData *data = [stringArg dataUsingEncoding:NSUTF8StringEncoding];
-        sqlite3_bind_text(statement, argIndex, data.bytes, data.length, SQLITE_TRANSIENT);
+        {
+            NSData *data = [stringArg dataUsingEncoding:NSUTF8StringEncoding];
+            sqlite3_bind_text(statement, argIndex, data.bytes, (int)data.length, SQLITE_TRANSIENT);
+        }
     }
 }
 

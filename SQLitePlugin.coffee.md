@@ -473,8 +473,9 @@
               tx.handleStatementSuccess batchExecutes[index].success, response
             else
               sqlError = newSQLError(response)
-              sqlError.code = response.result.code
-              sqlError.sqliteCode = response.result.sqliteCode
+              if !!response.result
+                sqlError.code = response.result.code
+                sqlError.sqliteCode = response.result.sqliteCode
               tx.handleStatementFailure batchExecutes[index].error, sqlError
           catch err
             if !txFailure

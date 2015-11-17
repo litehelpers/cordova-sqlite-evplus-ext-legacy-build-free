@@ -1,3 +1,4 @@
+
 /*
 License for this version: GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license.
 Contact for commercial license: info@litehelpers.net
@@ -316,14 +317,14 @@ Contact for commercial license: info@litehelpers.net
   };
 
   SQLitePluginTransaction.prototype.start = function() {
-    var err;
+    var err, error1;
     try {
       this.fn(this);
       if (this.executes.length > 0) {
         this.run();
       }
-    } catch (_error) {
-      err = _error;
+    } catch (error1) {
+      err = error1;
       txLocks[this.db.dbname].inProgress = false;
       this.db.startNextTransaction();
       if (this.error) {
@@ -437,18 +438,20 @@ Contact for commercial license: info@litehelpers.net
     tx = this;
     handlerFor = function(index, didSucceed) {
       return function(response) {
-        var err, sqlError;
+        var err, error1, sqlError;
         try {
           if (didSucceed) {
             tx.handleStatementSuccess(batchExecutes[index].success, response);
           } else {
             sqlError = newSQLError(response);
-            sqlError.code = response.result.code;
-            sqlError.sqliteCode = response.result.sqliteCode;
+            if (!!response.result) {
+              sqlError.code = response.result.code;
+              sqlError.sqliteCode = response.result.sqliteCode;
+            }
             tx.handleStatementFailure(batchExecutes[index].error, sqlError);
           }
-        } catch (_error) {
-          err = _error;
+        } catch (error1) {
+          err = error1;
           if (!txFailure) {
             txFailure = newSQLError(err);
           }

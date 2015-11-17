@@ -49,8 +49,6 @@ var mytests = function() {
         // litehelpers/Cordova-sqlite-storage#18 - thanks to @sonalk:
         it(suiteName + 'adding a large number of records', function(done) {
 
-          if (isWP8) pending('BROKEN for WP(7/8)'); // Hangs on wp8 platform
-
           var db = openDatabase("add-large-number-of-records.db", "1.0", "Demo", DEFAULT_SIZE);
 
           expect(db).toBeDefined()

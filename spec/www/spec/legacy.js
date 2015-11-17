@@ -1234,8 +1234,6 @@ var mytests = function() {
 
               ok(error.hasOwnProperty('message'), "error.message exists");
 
-              // XXX NOT WORKING for Web SQL or Windows version of plugin:
-              //if (!(isWebSql || isWindows))
               // XXX NOT WORKING for Windows version of plugin:
               if (!isWindows)
                 strictEqual(error.code, 5, "error.code === SQLException.SYNTAX_ERR (5)");

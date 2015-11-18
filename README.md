@@ -66,7 +66,6 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 - If a sql statement fails for which there is no error handler or the error handler does not return `false` to signal transaction recovery, the plugin fires the remaining sql callbacks before aborting the transaction.
 - In case of an error, the error `code` member is bogus on Android and Windows (fixed for Android in [litehelpers / Cordova-sqlite-enterprise-free](https://github.com/litehelpers/Cordova-sqlite-enterprise-free)).
 - Possible crash on Android when using Unicode emoji characters due to [Android bug 81341](https://code.google.com/p/android/issues/detail?id=81341), which _should_ be fixed in Android 6.x
-- REGEXP is only supported on iOS ... implementation-dependent for Android and Amazon Fire-OS, known to be broken on Windows ("Universal") and WP(7/8).
 - Close database bugs described below.
 - When a database is opened and deleted without closing, the iOS version is known to leak resources.
 - It is NOT possible to open multiple databases with the same name but in different locations (iOS version).
@@ -80,7 +79,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 - This plugin will not work before the callback for the "deviceready" event has been fired, as described in **Usage**. (This is consistent with the other Cordova plugins.)
 - Will not work in a web worker or iframe since these are not supported by the Cordova framework.
 - In-memory database `db=window.sqlitePlugin.openDatabase({name: ":memory:"})` is currently not supported.
-- The Android and Amazon Fire-OS versions cannot work with more than 100 open db files (due to the threading model used).
+- The Android version cannot work with more than 100 open db files (due to the threading model used).
 - UNICODE line separator (`\u2028`) and paragraph separator (`\u2029`) are currently not supported and known to be broken in iOS version due to [Cordova bug CB-9435](https://issues.apache.org/jira/browse/CB-9435).
 - Blob type is currently not supported and known to be broken on multiple platforms.
 - UNICODE `\u0000` (same as `\0`) character not working in Android or Windows/Windows Phone (8.1/XX)
@@ -92,6 +91,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 - Problems have been reported when using this plugin with Crosswalk (for Android). A couple of things you can try:
   - Install Crosswalk as a plugin instead of using Crosswalk to create the project.
   - Use `androidDatabaseImplementation: 2` in the openDatabase options as described below.
+- Does not work with [axemclion / react-native-cordova-plugin](https://github.com/axemclion/react-native-cordova-plugin) since the `window.sqlitePlugin` object exported (ES5 feature). It is recommended to use [andpor / react-native-sqlite-storage](https://github.com/andpor/react-native-sqlite-storage) for SQLite database access with React Native Android/iOS instead.
 
 ## Further testing needed
 
@@ -99,7 +99,6 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 - Use within [InAppBrowser](http://docs.phonegap.com/en/edge/cordova_inappbrowser_inappbrowser.md.html)
 - UNICODE characters not fully tested in the Windows "Universal" (8.1) version
 - Use with triggers and JOIN
-- TODO add some REGEXP tests
 - Integration with JXCore for Cordova (must be built without sqlite(3) built-in)
 
 ## Some tips and tricks
@@ -117,13 +116,14 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 - [litehelpers / Cordova-sqlite-storage](https://github.com/litehelpers/Cordova-sqlite-storage) - Cordova sqlite storage plugin with permissive licensing terms, supported for more platforms.
 - [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter) - supports [SQLCipher](https://www.zetetic.net/sqlcipher/) for Android, iOS, and Windows (8.1)
-- Adaptation for React Native (iOS version so far): [andpor / react-native-sqlite-storage](https://github.com/andpor/react-native-sqlite-storage)
+- Adaptation for React Native Android and iOS: [andpor / react-native-sqlite-storage](https://github.com/andpor/react-native-sqlite-storage)
 - Original version for iOS (with a slightly different transaction API): [davibe / Phonegap-SQLitePlugin](https://github.com/davibe/Phonegap-SQLitePlugin)
-- Simpler sqlite plugin with a simpler API: [samikrc / CordovaSQLite](https://github.com/samikrc/CordovaSQLite)
 
 ### Other SQLite adapter projects
 
-- [an-rahulpandey / cordova-plugin-dbcopy](https://github.com/an-rahulpandey/cordova-plugin-dbcopy) - Alternative way copy pre-populated database
+- [object-layer / AnySQL](https://github.com/object-layer/anysql) - Unified SQL API over multiple database engines
+- Simpler sqlite plugin with a simpler API: [samikrc / CordovaSQLite](https://github.com/samikrc/CordovaSQLite)
+- [an-rahulpandey / cordova-plugin-dbcopy](https://github.com/an-rahulpandey/cordova-plugin-dbcopy) - Alternative way to copy pre-populated database
 - [EionRobb / phonegap-win8-sqlite](https://github.com/EionRobb/phonegap-win8-sqlite) - WebSQL add-on for Win8/Metro apps (perhaps with a different API), using an old version of the C++ library from [SQLite3-WinRT Component](https://github.com/doo/SQLite3-WinRT) (as referenced by [01org / cordova-win8](https://github.com/01org/cordova-win8))
 - [SQLite3-WinRT Component](https://github.com/doo/SQLite3-WinRT) - C++ component that provides a nice SQLite API with promises for WinJS
 - [01org / cordova-win8](https://github.com/01org/cordova-win8) - old, unofficial version of Cordova API support for Windows 8 Metro that includes an old version of the C++ [SQLite3-WinRT Component](https://github.com/doo/SQLite3-WinRT)
@@ -147,10 +147,10 @@ The idea is to emulate the HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/
 ## Opening a database
 
 There are two options to open a database access object:
-- **Recommended:** `var db = window.sqlitePlugin.openDatabase({name: "my.db", location: 1});`
+- **Recommended:** `var db = window.sqlitePlugin.openDatabase({name: "my.db", location: 1}, successcb, errorcb);`
 - **Classical:** `var db = window.sqlitePlugin.openDatabase("myDatabase.db", "1.0", "Demo", -1);`
 
-The new `location` option is used to select the database subdirectory location (iOS *only*) with the following choices:
+The `location` option is used to select the database subdirectory location (iOS *only*) with the following choices:
 - `0` (default): `Documents` - visible to iTunes and backed up by iCloud
 - `1`: `Library` - backed up by iCloud, *NOT* visible to iTunes
 - `2`: `Library/LocalDatabase` - *NOT* visible to iTunes and *NOT* backed up by iCloud
@@ -168,7 +168,21 @@ function onDeviceReady() {
 }
 ```
 
-**NOTES:**
+The successcb and errorcb callback parameters are optional but can be extremely helpful in case anything goes wrong. For example:
+
+```js
+window.sqlitePlugin.openDatabase({name: "my.db"}, function(db) {
+  db.transaction(function(tx) {
+    // ...
+  }, function(err) {
+    console.log('Open database ERROR: ' + JSON.stringify(err));
+  });
+});
+```
+
+If any sql statements or transactions are attempted on a database object before the openDatabase result is known, they will be queued and will be aborted in case the database cannot be opened.
+
+**OTHER NOTES:**
 - The database file name should include the extension, if desired.
 - It is possible to open multiple database access objects for the same database.
 - The database access object can be closed as described below.
@@ -766,8 +780,8 @@ The adapter is now part of [PouchDB](http://pouchdb.com/) thanks to [@nolanlawso
 
 TBD fix for this version:
 
-- `common-src` - source for Android (*not* using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector)), iOS, Windows (8.1), and Amazon Fire-OS versions (shared with [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter))
-- `evfree-rc` - pre-release of free enterprise version for all supported platforms, including library dependencies for Android, Windows (8.1), and WP(7/8)
+- `common-src` - source for Android ~~(*not* using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector))~~, iOS, Windows (8.1), ~~and Amazon Fire-OS~~ versions (shared with [litehelpers / Cordova-sqlcipher-adapter](https://github.com/litehelpers/Cordova-sqlcipher-adapter))
+- `evfree-rc` - pre-release of free enterprise version for all supported platforms, including library dependencies for Android and Windows "Universal" (8.1/XX)
 - [FUTURE TBD] ~~`master` - version for release, to be included in PhoneGap build.~~
 
 ## Contact

@@ -60,6 +60,7 @@ var mytests = function() {
                     t2.executeSql("SELECT * from tt", [], function(tx, res) {
                       expect(res.rows.item(0).tf).toEqual('t2');
 
+                      // test tx.abort():
                       t2.abort(function() {
                         var t3 = db.beginTransaction();
                         t3.executeSql("SELECT * from tt", [], function(tx, res) {
@@ -130,6 +131,82 @@ var mytests = function() {
 
           tx1.end();
 
+        }, MYTIMEOUT);
+
+        it(suiteName + "empty transaction", function(done) {
+          var db = openDatabase("multi-part-empty-tx-test.db", "1.0", "Demo", DEFAULT_SIZE);
+
+          expect(db).toBeDefined()
+
+          var tx = db.beginTransaction();
+
+          expect(tx).toBeDefined()
+
+          tx.end(function() {
+            done();
+          }, function(err) {
+            expect(false).toBe(true);
+            done();
+          });
+        }, MYTIMEOUT);
+
+        it(suiteName + "empty transaction end in next tick", function(done) {
+          var db = openDatabase("multi-part-empty-end-next-tick.db", "1.0", "Demo", DEFAULT_SIZE);
+
+          expect(db).toBeDefined()
+
+          var tx = db.beginTransaction();
+
+          expect(tx).toBeDefined()
+
+          setTimeout(function() {
+            tx.end(function() {
+              done();
+            }, function(err) {
+              expect(false).toBe(true);
+              done();
+            });
+          }, 0);
+        }, MYTIMEOUT);
+
+        // XXX TODO BROKEN:
+        xit(suiteName + "empty transaction end after delay [BROKEN]", function(done) {
+          var mydelay = 800;
+
+          var db = openDatabase("multi-part-empty-end-after-delay.db", "1.0", "Demo", DEFAULT_SIZE);
+
+          expect(db).toBeDefined()
+
+          var tx = db.beginTransaction();
+
+          expect(tx).toBeDefined()
+
+          setTimeout(function() {
+            tx.end(function() {
+              done();
+            }, function(err) {
+              expect(false).toBe(true);
+              done();
+            });
+          }, mydelay);
+        }, MYTIMEOUT);
+
+        it(suiteName + "abort after delay", function(done) {
+          var mydelay = 800;
+
+          var db = openDatabase("abort-after-delay.db", "1.0", "Demo", DEFAULT_SIZE);
+
+          expect(db).toBeDefined()
+
+          var tx = db.beginTransaction();
+
+          expect(tx).toBeDefined()
+
+          setTimeout(function() {
+            tx.abort(function(e) {
+              done();
+            });
+          }, mydelay);
         }, MYTIMEOUT);
 
     });

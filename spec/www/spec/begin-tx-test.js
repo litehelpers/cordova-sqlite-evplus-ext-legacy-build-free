@@ -169,8 +169,7 @@ var mytests = function() {
           }, 0);
         }, MYTIMEOUT);
 
-        // XXX TODO BROKEN:
-        xit(suiteName + "empty transaction end after delay [BROKEN]", function(done) {
+        it(suiteName + "empty transaction end after delay", function(done) {
           var mydelay = 800;
 
           var db = openDatabase("multi-part-empty-end-after-delay.db", "1.0", "Demo", DEFAULT_SIZE);

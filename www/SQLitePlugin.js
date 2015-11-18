@@ -363,7 +363,11 @@ Contact for commercial license: info@litehelpers.net
     this.error = error;
     if (this.isPaused) {
       this.isPaused = false;
-      return this.run();
+      if (this.executes.length === 0) {
+        this.$finish();
+      } else {
+        this.run();
+      }
     }
   };
 
@@ -376,7 +380,7 @@ Contact for commercial license: info@litehelpers.net
     this.addStatement('INVALID STATEMENT', [], null, null);
     if (this.isPaused) {
       this.isPaused = false;
-      return this.run();
+      this.run();
     }
   };
 

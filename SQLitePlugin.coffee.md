@@ -390,7 +390,12 @@
       @error = error
       if @isPaused
         @isPaused = false
-        @run()
+        if @executes.length == 0
+          @$finish()
+        else
+          @run()
+
+      return
 
     SQLitePluginTransaction::abort = (errorcb) ->
       if !@canPause
@@ -403,6 +408,8 @@
       if @isPaused
         @isPaused = false
         @run()
+
+      return
 
     # This method adds the SQL statement to the transaction queue but does not check for
     # finalization since it is used to execute COMMIT and ROLLBACK.

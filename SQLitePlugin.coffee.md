@@ -177,7 +177,7 @@
         error newSQLError 'database not open'
         return
 
-      @addTransaction new SQLitePluginTransaction(this, fn, error, success, true, true)
+      @addTransaction new SQLitePluginTransaction(this, fn, error, success, false, true)
       return
 
     SQLitePlugin::startNextTransaction = ->
@@ -390,7 +390,12 @@
       @error = error
       if @isPaused
         @isPaused = false
-        @run()
+        if @executes.length == 0
+          @$finish()
+        else
+          @run()
+
+      return
 
     SQLitePluginTransaction::abort = (errorcb) ->
       if !@canPause
@@ -403,6 +408,8 @@
       if @isPaused
         @isPaused = false
         @run()
+
+      return
 
     # This method adds the SQL statement to the transaction queue but does not check for
     # finalization since it is used to execute COMMIT and ROLLBACK.
@@ -473,8 +480,9 @@
               tx.handleStatementSuccess batchExecutes[index].success, response
             else
               sqlError = newSQLError(response)
-              sqlError.code = response.result.code
-              sqlError.sqliteCode = response.result.sqliteCode
+              if !!response.result
+                sqlError.code = response.result.code
+                sqlError.sqliteCode = response.result.sqliteCode
               tx.handleStatementFailure batchExecutes[index].error, sqlError
           catch err
             if !txFailure

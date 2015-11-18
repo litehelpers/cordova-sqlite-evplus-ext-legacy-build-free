@@ -153,7 +153,7 @@ Contact for commercial license: info@litehelpers.net
       error(newSQLError('database not open'));
       return;
     }
-    this.addTransaction(new SQLitePluginTransaction(this, fn, error, success, true, true));
+    this.addTransaction(new SQLitePluginTransaction(this, fn, error, success, false, true));
   };
 
   SQLitePlugin.prototype.startNextTransaction = function() {
@@ -316,14 +316,14 @@ Contact for commercial license: info@litehelpers.net
   };
 
   SQLitePluginTransaction.prototype.start = function() {
-    var err;
+    var err, error1;
     try {
       this.fn(this);
       if (this.executes.length > 0) {
         this.run();
       }
-    } catch (_error) {
-      err = _error;
+    } catch (error1) {
+      err = error1;
       txLocks[this.db.dbname].inProgress = false;
       this.db.startNextTransaction();
       if (this.error) {
@@ -362,7 +362,11 @@ Contact for commercial license: info@litehelpers.net
     this.error = error;
     if (this.isPaused) {
       this.isPaused = false;
-      return this.run();
+      if (this.executes.length === 0) {
+        this.$finish();
+      } else {
+        this.run();
+      }
     }
   };
 
@@ -375,7 +379,7 @@ Contact for commercial license: info@litehelpers.net
     this.addStatement('INVALID STATEMENT', [], null, null);
     if (this.isPaused) {
       this.isPaused = false;
-      return this.run();
+      this.run();
     }
   };
 
@@ -437,18 +441,20 @@ Contact for commercial license: info@litehelpers.net
     tx = this;
     handlerFor = function(index, didSucceed) {
       return function(response) {
-        var err, sqlError;
+        var err, error1, sqlError;
         try {
           if (didSucceed) {
             tx.handleStatementSuccess(batchExecutes[index].success, response);
           } else {
             sqlError = newSQLError(response);
-            sqlError.code = response.result.code;
-            sqlError.sqliteCode = response.result.sqliteCode;
+            if (!!response.result) {
+              sqlError.code = response.result.code;
+              sqlError.sqliteCode = response.result.sqliteCode;
+            }
             tx.handleStatementFailure(batchExecutes[index].error, sqlError);
           }
-        } catch (_error) {
-          err = _error;
+        } catch (error1) {
+          err = error1;
           if (!txFailure) {
             txFailure = newSQLError(err);
           }

@@ -1,6 +1,6 @@
 {
   "name": "cordova-sqlite-evfree",
-  "version": "0.8.1-pre",
+  "version": "0.8.1",
   "description": "Native interface to SQLite for PhoneGap/Cordova - free enterprise version with Android memory fix",
   "cordova": {
     "id": "cordova-sqlite-evfree",

@@ -10,7 +10,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 ## Status
 
-- Free support is available in ~~public locations such as~~ [litehelpers / Cordova-sqlite-enterprise-free / issues](https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues) ~~and https://gitter.im/litehelpers/Cordova-sqlite-storage~~; commercial support is available by contacting: info@litehelpers.net
+- Free support is available in [litehelpers / Cordova-sqlite-enterprise-free / issues](https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues); commercial support is available by contacting: info@litehelpers.net
 - Patches patches will *NOT* be accepted on this project due to potential licensing issues.
 - Features omitted from this version branch: pre-populated database support, REGEXP extension for iOS, WP(7/8) and Amazon Fire-OS support
 - Windows "Universal" for Windows 8.0/8.1(+) and Windows Phone 8.1(+) version is in an alpha state:

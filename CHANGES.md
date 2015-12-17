@@ -1,5 +1,9 @@
 # Changes
 
+## 0.8.2-pre
+
+TBD
+
 ## 0.8.1
 
 - Multi-part transactions API (see README.md)

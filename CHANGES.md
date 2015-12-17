@@ -1,6 +1,6 @@
 # Changes
 
-## 0.7.2-evfree-common-dev
+## 0.7.2-evfree-regexp-dev
 
 - URI encoding workaround for Cordova BUG CB-9435 (iOS *only*)
 

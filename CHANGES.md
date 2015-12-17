@@ -1,5 +1,9 @@
 # Changes
 
+## 0.7.2-evfree-common-dev
+
+- URI encoding workaround for Cordova BUG CB-9435 (iOS *only*)
+
 ## 0.7.1-evcommon-dev
 
 - Rename Windows C++ Database close function to closedb to resolve conflict for Windows Store certification

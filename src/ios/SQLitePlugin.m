@@ -10,6 +10,45 @@
 
 #import "sqlite3.h"
 
+#include <regex.h>
+
+// NOTE: This is now broken by cordova-ios 4.0, see:
+// https://issues.apache.org/jira/browse/CB-9638
+// Solution is to use NSJSONSerialization instead.
+#ifdef READ_BLOB_AS_BASE64
+#import <Cordova/NSData+Base64.h>
+#endif
+
+static void
+sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
+    if ( argc < 2 ) {
+        sqlite3_result_error(context, "SQL function regexp() called with missing arguments.", -1);
+        return;
+    }
+
+    char * reg = (char *)sqlite3_value_text(values[0]);
+    char * text = (char *)sqlite3_value_text(values[1]);
+
+    if ( argc != 2 || reg == 0 || text == 0) {
+        sqlite3_result_error(context, "SQL function regexp() called with invalid arguments.", -1);
+        return;
+    }
+
+    int ret;
+    regex_t regex;
+
+    ret = regcomp(&regex, reg, REG_EXTENDED | REG_NOSUB);
+    if ( ret != 0 ) {
+        sqlite3_result_error(context, "error compiling regular expression", -1);
+        return;
+    }
+
+    ret = regexec(&regex, text , 0, NULL, 0);
+    regfree(&regex);
+
+    sqlite3_result_int(context, (ret != REG_NOMATCH));
+}
+
 
 @implementation SQLitePlugin
 
@@ -108,6 +147,8 @@
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to open DB"];
                 return;
             } else {
+                sqlite3_create_function(db, "REGEXP", 2, SQLITE_ANY, NULL, &sqlite_regexp, NULL, NULL);
+
                 // for SQLCipher version:
                 // NSString *dbkey = [options objectForKey:@"key"];
                 // const char *key = NULL;
@@ -118,7 +159,7 @@
                 if(sqlite3_exec(db, (const char*)"SELECT count(*) FROM sqlite_master;", NULL, NULL, NULL) == SQLITE_OK) {
                     dbPointer = [NSValue valueWithPointer:db];
                     [openDBs setObject: dbPointer forKey: dbfilename];
-                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"a1"];
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"a1i"];
                 } else {
                     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to open DB with key"];
                     // XXX TODO: close the db handle & [perhaps] remove from openDBs!!
@@ -270,6 +311,7 @@
     NSMutableArray *resultRows = [NSMutableArray arrayWithCapacity:0];
     NSMutableDictionary *entry;
     NSObject *columnValue;
+    NSString *columnStringValue;
     NSString *columnName;
     NSObject *insertId;
     NSObject *rowsAffected;
@@ -317,12 +359,13 @@
                             break;
                         case SQLITE_BLOB:
                         case SQLITE_TEXT:
-                            columnValue = [[NSString alloc] initWithBytes:(char *)sqlite3_column_text(statement, i)
+                            columnStringValue = [[NSString alloc] initWithBytes:(char *)sqlite3_column_text(statement, i)
                                                                    length:sqlite3_column_bytes(statement, i)
                                                                  encoding:NSUTF8StringEncoding];
 #if !__has_feature(objc_arc)
-                            [columnValue autorelease];
+                            [columnStringValue autorelease];
 #endif
+                            columnValue = [columnStringValue stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
                             break;
                         case SQLITE_NULL:
                         // just in case (should not happen):

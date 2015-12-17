@@ -40,6 +40,7 @@
 
     # Indicate if the platform implementation (Android) requires flat JSON interface
     useflatjson = false
+    resulturiencoding = false
 
 ## utility functions:
 
@@ -242,9 +243,12 @@
 
           # Needed to distinguish between Android version (with flat JSON batch sql interface) and
           # other versions (JSON batch interface unchanged)
-          if !!a1 and a1 == 'a1'
+          if !!a1 and (a1 is 'a1' or a1 is 'a1i')
             console.log 'Detected Android/iOS version with flat JSON interface'
             useflatjson = true
+            if a1 is 'a1i'
+              console.log 'with result uri encoding'
+              resulturiencoding = true
 
           #if !@openDBs[@dbname] then call open error cb, and abort pending tx if any
           if !@openDBs[@dbname]
@@ -568,6 +572,8 @@
               while j < c
                 k = result[ri++]
                 v = result[ri++]
+                if resulturiencoding and typeof v is 'string'
+                  v = decodeURIComponent v
                 row[k] = v
                 ++j
 

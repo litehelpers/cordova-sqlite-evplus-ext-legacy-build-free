@@ -2,7 +2,7 @@
 
 ## 0.8.2-pre
 
-TBD
+- URI encoding workaround for Cordova BUG CB-9435 (iOS *only*)
 
 ## 0.8.1
 

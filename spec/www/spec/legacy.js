@@ -161,9 +161,6 @@ var mytests = function() {
           });
         });
 
-        // NOTE: the next two tests show that for iOS [BUG #147]:
-        // - UNICODE \u2028 line separator from Javascript to Objective-C is working ok
-        // - UNICODE \u2028 line separator from Objective-C to Javascript is BROKEN
         test_it(suiteName + "UNICODE \\u2028 line separator string to hex", function() {
           if (isWP8) pending('BROKEN for WP(8)'); // [BUG #202] UNICODE characters not working with WP(8)
 
@@ -199,14 +196,11 @@ var mytests = function() {
           });
         });
 
-        test_it(suiteName + ' handles UNICODE \\u2028 line separator correctly [string test]', function () {
+        // In this version, test \u2029 (paragraph separator) here and \u2028 (line separator) in another test
+        test_it(suiteName + ' handles UNICODE \\u2029 paragraph separator correctly [string test]', function () {
 
           if (isWP8) pending('BROKEN for WP(8)'); // [BUG #202] UNICODE characters not working with WP(8)
-          if (!(isWebSql || isAndroid || isIE)) pending('BROKEN for iOS'); // XXX [BUG #147] (no callback received)
 
-          // NOTE: since the above test shows the UNICODE line separator (\u2028)
-          // is seen by the sqlite implementation OK, it is now concluded that
-          // the failure is caused by the Objective-C JSON result encoding.
           var db = openDatabase("UNICODE-line-separator-string-2.db", "1.0", "Demo", DEFAULT_SIZE);
 
           ok(!!db, "db object");
@@ -217,10 +211,10 @@ var mytests = function() {
 
             ok(!!tx, "tx object");
 
-            var text = 'Abcd\u20281234';
+            var text = 'Abcd\u20291234';
             tx.executeSql("select lower(?) as lowertext", [text], function (tx, res) {
               ok(!!res, "res object");
-              equal(res.rows.item(0).lowertext, "abcd\u20281234", "lower case string test with UNICODE line separator");
+              equal(res.rows.item(0).lowertext, "abcd\u20291234", "lower case string test with UNICODE line separator");
 
               start();
             });
@@ -1168,13 +1162,9 @@ var mytests = function() {
           });
         });
 
-        // XXX Brody NOTE: same issue is now reproduced in a string test.
-        //           TBD ???: combine with other test
-        // BUG #147 iOS version of plugin BROKEN:
         test_it(suiteName +
             ' handles UNICODE \\u2028 line separator correctly [in database]', function () {
           if (isWP8) pending('BROKEN for WP(8)'); // [BUG #202] UNICODE characters not working with WP(8)
-          if (!(isWebSql || isAndroid || isIE)) pending('BROKEN for iOS'); // XXX [BUG #147] (no callback received)
 
           var dbName = "Unicode-line-separator.db";
           var db = openDatabase(dbName, "1.0", "Demo", DEFAULT_SIZE);

@@ -118,7 +118,7 @@
                 if(sqlite3_exec(db, (const char*)"SELECT count(*) FROM sqlite_master;", NULL, NULL, NULL) == SQLITE_OK) {
                     dbPointer = [NSValue valueWithPointer:db];
                     [openDBs setObject: dbPointer forKey: dbfilename];
-                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"a1"];
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"a1i"];
                 } else {
                     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to open DB with key"];
                     // XXX TODO: close the db handle & [perhaps] remove from openDBs!!
@@ -270,6 +270,7 @@
     NSMutableArray *resultRows = [NSMutableArray arrayWithCapacity:0];
     NSMutableDictionary *entry;
     NSObject *columnValue;
+    NSString *columnStringValue;
     NSString *columnName;
     NSObject *insertId;
     NSObject *rowsAffected;
@@ -317,12 +318,13 @@
                             break;
                         case SQLITE_BLOB:
                         case SQLITE_TEXT:
-                            columnValue = [[NSString alloc] initWithBytes:(char *)sqlite3_column_text(statement, i)
+                            columnStringValue = [[NSString alloc] initWithBytes:(char *)sqlite3_column_text(statement, i)
                                                                    length:sqlite3_column_bytes(statement, i)
                                                                  encoding:NSUTF8StringEncoding];
 #if !__has_feature(objc_arc)
-                            [columnValue autorelease];
+                            [columnStringValue autorelease];
 #endif
+                            columnValue = [columnStringValue stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
                             break;
                         case SQLITE_NULL:
                         // just in case (should not happen):

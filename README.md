@@ -28,10 +28,10 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 
 ## Announcements
 
-- This version has the following API improvement(s):
+- This version has the following improvement(s):
+  - iOS version can now handle all UNICODE characters, using URI encoding as a workaround for [Cordova bug CB-9435](https://issues.apache.org/jira/browse/CB-9435).
   - Multi-part transactions API (described below)
   - Error result with proper Web SQL `code` member and `sqliteCode` as reported by the SQLite C library (Android/iOS)
-- This version has the following memory improvements:
   - flat JSON interface between Javascript and native parts
   - *optional*: transaction sql chunking, which can be enabled by changing the `MAX_SQL_CHUNK` value in SQLitePlugin.js
 - PhoneGap Build is now supported through the npm package: http://phonegap.com/blog/2015/05/26/npm-plugins-available/
@@ -80,7 +80,7 @@ NOTE (TBD): no Circle CI or Travis CI working in this version branch.
 - Will not work in a web worker or iframe since these are not supported by the Cordova framework.
 - In-memory database `db=window.sqlitePlugin.openDatabase({name: ":memory:"})` is currently not supported.
 - The Android version cannot work with more than 100 open db files (due to the threading model used).
-- UNICODE line separator (`\u2028`) and paragraph separator (`\u2029`) are currently not supported and known to be broken in iOS version due to [Cordova bug CB-9435](https://issues.apache.org/jira/browse/CB-9435).
+- Fixed with a workaround in this version: ~~UNICODE line separator (`\u2028`) and paragraph separator (`\u2029`) are currently not supported and known to be broken in iOS version due to [Cordova bug CB-9435](https://issues.apache.org/jira/browse/CB-9435).~~
 - Blob type is currently not supported and known to be broken on multiple platforms.
 - UNICODE `\u0000` (same as `\0`) character not working in Android or Windows/Windows Phone (8.1/XX)
 - Case-insensitive matching and other string manipulations on Unicode characters, which is provided by optional ICU integration in the sqlite source and working with recent versions of Android, is not supported for any target platforms.

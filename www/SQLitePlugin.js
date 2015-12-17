@@ -4,7 +4,7 @@ Contact for commercial license: info@litehelpers.net
  */
 
 (function() {
-  var DB_STATE_INIT, DB_STATE_OPEN, MAX_SQL_CHUNK, READ_ONLY_REGEX, SQLiteFactory, SQLitePlugin, SQLitePluginTransaction, argsArray, dblocations, newSQLError, nextTick, root, txLocks, useflatjson;
+  var DB_STATE_INIT, DB_STATE_OPEN, MAX_SQL_CHUNK, READ_ONLY_REGEX, SQLiteFactory, SQLitePlugin, SQLitePluginTransaction, argsArray, dblocations, newSQLError, nextTick, resulturiencoding, root, txLocks, useflatjson;
 
   root = this;
 
@@ -25,6 +25,8 @@ Contact for commercial license: info@litehelpers.net
   txLocks = {};
 
   useflatjson = false;
+
+  resulturiencoding = false;
 
   newSQLError = function(error, code) {
     var sqlError;
@@ -207,9 +209,13 @@ Contact for commercial license: info@litehelpers.net
         return function(a1) {
           var txLock;
           console.log('OPEN database: ' + _this.dbname + ' OK');
-          if (!!a1 && a1 === 'a1') {
+          if (!!a1 && (a1 === 'a1' || a1 === 'a1i')) {
             console.log('Detected Android/iOS version with flat JSON interface');
             useflatjson = true;
+            if (a1 === 'a1i') {
+              console.log('with result uri encoding');
+              resulturiencoding = true;
+            }
           }
           if (!_this.openDBs[_this.dbname]) {
             console.log('database was closed during open operation');
@@ -537,6 +543,9 @@ Contact for commercial license: info@litehelpers.net
             while (j < c) {
               k = result[ri++];
               v = result[ri++];
+              if (resulturiencoding && typeof v === 'string') {
+                v = decodeURIComponent(v);
+              }
               row[k] = v;
               ++j;
             }

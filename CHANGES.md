@@ -2,6 +2,7 @@
 
 ## 0.8.2-pre
 
+- Android version with sqlite 3.8.10.2 and REGEXP support using PCRE (8.37)
 - URI encoding workaround for Cordova BUG CB-9435 (iOS *only*)
 
 ## 0.8.1

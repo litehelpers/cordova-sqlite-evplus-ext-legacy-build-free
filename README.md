@@ -1,4 +1,4 @@
-# Cordova/PhoneGap sqlite storage - enterprise evcommon-src version branch with internal memory improvements
+# Cordova/PhoneGap sqlite storage - enterprise evfree-ext-src version branch with internal memory improvements
  
 Native interface to sqlite in a Cordova/PhoneGap plugin for Android, iOS, and Windows "Universal" (8.1) with API similar to HTML5/[Web SQL API](http://www.w3.org/TR/webdatabase/).
 
@@ -44,7 +44,6 @@ I raised [Cordova bug CB-9830](https://issues.apache.org/jira/browse/CB-9830) to
 - Free support is available in ~~public locations such as~~ [litehelpers / Cordova-sqlite-enterprise-free / issues](https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues) ~~and https://gitter.im/litehelpers/Cordova-sqlite-storage~~; commercial support is available by contacting: info@litehelpers.net
 - Patches patches will *NOT* be accepted on this project due to potential licensing issues.
 - The following features are omitted from this version branch:
-  - ~~REGEXP support~~
   - Pre-populated database
   - WP(7/8)
 - Amazon Fire-OS is dropped due to lack of support by Cordova. Android version should be used to deploy to Fire-OS 5.0(+) devices ref: [cordova/cordova-discuss#32 (comment)](https://github.com/cordova/cordova-discuss/issues/32#issuecomment-167021676)
@@ -56,14 +55,14 @@ I raised [Cordova bug CB-9830](https://issues.apache.org/jira/browse/CB-9830) to
   - Not tested with a Windows 10 (or Windows Phone 10) target; Windows 10 build is not expected to work with Windows Phone
 - FTS3, FTS4, and R-Tree support is tested working OK in this version (for all target platforms in this version branch Android/iOS/Windows "Universal")
 - Status for the other target platforms:
-  - Android: now using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) (with sqlite `3.7.17`), with support for FTS3/FTS4 and R-Tree
+  - Android: now using [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) (with sqlite `3.8.10.2`), with support for FTS3/FTS4 and R-Tree, and REGEXP support using PCRE 8.37 as built from [liteglue / Android-sqlite-native-driver-regexp-pcre](https://github.com/liteglue/Android-sqlite-native-driver-regexp-pcre)
   - iOS: sqlite `3.8.10.2` embedded
 - Android is supported back to SDK 10 (a.k.a. Gingerbread, Android 2.3.3); support for older versions is available upon request.
 - API to open the database may be changed somewhat to be more streamlined. Transaction and single-statement query API will NOT be changed.
 
 ## Announcements
 
-- _REGEXP is now supported for Android and iOS platforms._
+- REGEXP is now supported for Android and iOS platforms.
 - This version has the following improvement(s):
   - iOS version can now handle all UNICODE characters, using URI encoding as a workaround for [Cordova bug CB-9435](https://issues.apache.org/jira/browse/CB-9435).
   - Multi-part transactions API (described below)
@@ -103,7 +102,6 @@ TBD *your app here*
 - If a sql statement fails for which there is no error handler or the error handler does not return `false` to signal transaction recovery, the plugin fires the remaining sql callbacks before aborting the transaction.
 - In case of an error, the error `code` member is bogus on Windows (fixed for Android in this version).
 - Possible crash on Android when using Unicode emoji characters due to [Android bug 81341](https://code.google.com/p/android/issues/detail?id=81341), which _should_ be fixed in Android 6.x
-- ~~REGEXP is only supported on iOS, known to be broken on Android (default database implementation) and Windows ("Universal").~~
 - In-memory database `db=window.sqlitePlugin.openDatabase({name: ":memory:"})` is currently not supported.
 - Close database bugs described below.
 - When a database is opened and deleted without closing, the iOS version is known to leak resources.
@@ -117,7 +115,7 @@ TBD *your app here*
 - The db version, display name, and size parameter values are not supported and will be ignored.
 - This plugin will not work before the callback for the 'deviceready' event has been fired, as described in **Usage**. (This is consistent with the other Cordova plugins.)
 - This version will not work within a web worker since are not supported by the Cordova framework. _Version with support for web workers, includes the memory and iOS Unicode character fixes from this project at:_ [litehelpers / cordova-sqlite-workers-evfree](https://github.com/litehelpers/cordova-sqlite-workers-evfree)
-- _REGEXP not implemented for Windows_
+- REGEXP not implemented for Windows
 - In-memory database `db=window.sqlitePlugin.openDatabase({name: ":memory:"})` is currently not supported.
 - The Android version cannot work with more than 100 open db files (due to the threading model used).
 - Fixed with a workaround in this version: ~~UNICODE line separator (`\u2028`) and paragraph separator (`\u2029`) are currently not supported and known to be broken in iOS version due to [Cordova bug CB-9435](https://issues.apache.org/jira/browse/CB-9435).~~

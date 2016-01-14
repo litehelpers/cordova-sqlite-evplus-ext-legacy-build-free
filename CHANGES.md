@@ -1,6 +1,6 @@
 # Changes
 
-## 0.7.1-xx-evcommon-dev
+## 0.7.2-evcommon-dev
 
 - All iOS operations are now using background processing (reported to resolve intermittent problems with cordova-ios@4.0.1)
 

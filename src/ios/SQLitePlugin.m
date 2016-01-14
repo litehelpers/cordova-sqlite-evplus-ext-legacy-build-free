@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015: Christopher J. Brody (aka Chris Brody)
+ * Copyright (c) 2012-2016: Christopher J. Brody (aka Chris Brody)
  * Copyright (C) 2011 Davide Bertola
  *
  * License for this version: GPL v3 (http://www.gnu.org/licenses/gpl.txt) or commercial license.
@@ -114,7 +114,34 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
     return dbPath;
 }
 
+// XXX NOTE: This implementation gets _all_ operations working in the background
+// and _should_ resolve intermittent problems reported with cordova-ios@4.0.1).
+// This implementation _does_ fail certain rapidly repeated
+// open-and close and open-and-delete test scenarios.
+-(void)executeInBackground: (CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^{
+        @synchronized(self) {
+            if ([command.methodName isEqualToString: @"open"])
+                [self openNow: command];
+            else if ([command.methodName isEqualToString: @"close"])
+                [self closeNow: command];
+            else if ([command.methodName isEqualToString: @"delete"])
+                [self deleteNow: command];
+            else if ([command.methodName isEqualToString: @"backgroundExecuteSqlBatch"])
+                [self executeSqlBatchNow: command];
+        }
+    }];
+}
+
 -(void)open: (CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^{
+        [self executeInBackground: command];
+    }];
+}
+
+-(void)openNow: (CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
     NSMutableDictionary *options = [command.arguments objectAtIndex:0];
@@ -142,6 +169,13 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
             sqlite3 *db;
 
             NSLog(@"open full db path: %@", dbname);
+
+            /* Option to create database from resource (pre-populated) if it does not exist: */
+            if (![[NSFileManager defaultManager] fileExistsAtPath: dbname]) {
+                NSString * createFromResource = [options objectForKey:@"createFromResource"];
+                if (createFromResource != NULL)
+                    [self createFromResource: dbfilename withDbname: dbname];
+            }
 
             if (sqlite3_open(name, &db) != SQLITE_OK) {
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to open DB"];
@@ -180,8 +214,32 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
     // NSLog(@"open cb finished ok");
 }
 
+-(void) createFromResource: (NSString *)dbfile withDbname:(NSString *)dbname {
+    NSString * bundleRoot = [[NSBundle mainBundle] resourcePath];
+    NSString * www = [bundleRoot stringByAppendingPathComponent:@"www"];
+    NSString * prepopulatedDb = [www stringByAppendingPathComponent: dbfile];
+    // NSLog(@"Look for pre-populated DB at: %@", prepopulatedDb);
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:prepopulatedDb]) {
+        NSLog(@"Found prepopulated DB: %@", prepopulatedDb);
+        NSError * error;
+        BOOL success = [[NSFileManager defaultManager] copyItemAtPath:prepopulatedDb toPath:dbname error:&error];
+
+        if(success)
+            NSLog(@"Copied pre-populated DB content to: %@", dbname);
+        else
+            NSLog(@"Unable to copy pre-populated DB file: %@", [error localizedDescription]);
+    }
+}
 
 -(void) close: (CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^{
+        [self executeInBackground: command];
+    }];
+}
+
+-(void)closeNow: (CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
     NSMutableDictionary *options = [command.arguments objectAtIndex:0];
@@ -213,6 +271,13 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
 }
 
 -(void) delete: (CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^{
+        [self executeInBackground: command];
+    }];
+}
+
+-(void)deleteNow: (CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
     NSMutableDictionary *options = [command.arguments objectAtIndex:0];
@@ -246,11 +311,11 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
 -(void) backgroundExecuteSqlBatch: (CDVInvokedUrlCommand*)command
 {
     [self.commandDelegate runInBackground:^{
-        [self executeSqlBatch: command];
+        [self executeSqlBatchNow: command];
     }];
 }
 
--(void) executeSqlBatch: (CDVInvokedUrlCommand*)command
+-(void) executeSqlBatchNow: (CDVInvokedUrlCommand*)command
 {
     NSMutableDictionary *options = [command.arguments objectAtIndex:0];
     NSMutableArray *results = [NSMutableArray arrayWithCapacity:0];

@@ -1,8 +1,14 @@
 # Changes
 
+## 0.8.2-pre-xx
+
+- Support pre-populated database for Android, iOS
+- BROKEN: pre-populated database for Windows "Universal"
+- All iOS operations are now using background processing (reported to resolve intermittent problems with cordova-ios@4.0.1)
+
 ## 0.8.2-pre
 
-- Android version with sqlite 3.8.10.2 and REGEXP support using PCRE (8.37)
+- REGEXP support for Android (using PCRE with sqlite 3.8.10.2) and iOS (using built-in regex library)
 - URI encoding workaround for Cordova BUG CB-9435 (iOS *only*)
 
 ## 0.8.1

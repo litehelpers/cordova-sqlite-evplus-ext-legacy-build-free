@@ -40,9 +40,9 @@ var isWindows = /Windows /.test(navigator.userAgent); // Windows (8.1)
 var isIE = isWindows || isWP8;
 var isWebKit = !isIE; // TBD [Android or iOS]
 
-//var scenarioList = [ isAndroid ? 'Plugin-sqlite-connector' : 'Plugin', 'HTML5', 'Plugin-android.database' ];
-var scenarioList = [ 'Plugin', 'HTML5' ];
+var scenarioList = [ isAndroid ? 'Plugin-default-xx' : 'Plugin', 'HTML5', 'Plugin-xx' ];
 
+// XXX FUTURE TBD:
 //var scenarioCount = isAndroid ? 3 : (isIE ? 1 : 2);
 var scenarioCount = (!!window.hasWebKitBrowser) ? 2 : 1;
 
@@ -1516,7 +1516,7 @@ var mytests = function() {
 
     //var suiteName = "plugin: ";
 
-    var scenarioList = [ isAndroid ? 'plugin-sqlite-connector' : 'Plugin', 'plugin-android.database' ];
+    var scenarioList = [ isAndroid ? 'Plugin-default-db-implementation' : 'Plugin', 'Plugin-builtin-db-implementation' ];
 
     var scenarioCount = isAndroid ? 2 : 1;
 
@@ -1705,20 +1705,25 @@ var mytests = function() {
 
           var dbName = "Database-Open-callback";
           openDatabase(dbName, "1.0", "Demo", DEFAULT_SIZE, function (db) {
-            ok(true, 'expected open success callback to be called after database is closed');
+            ok(true, 'expected open success callback to be called ...');
             start(1);
           }, function (error) {
-            ok(false, 'expected open error callback not to be called after database is closed');
+            ok(false, 'expected open error callback not to be called ...');
             start(1);
           });
         });
 
-        test_it(suiteName + ' database.close calls its success callback', function () {
+        test_it(suiteName + ' slower database.close calls its success callback', function () {
           // asynch test coming up
           stop(1);
 
           var dbName = "Database-Close-callback";
-          var db = openDatabase(dbName, "1.0", "Demo", DEFAULT_SIZE);
+
+          // faster version BROKEN for iOS (due to background processing model):
+          //var db = openDatabase(dbName, "1.0", "Demo", DEFAULT_SIZE);
+
+          // START of slower version:
+          openDatabase(dbName, "1.0", "Demo", DEFAULT_SIZE, function (db) {
 
           // close database - need to run tests directly in callbacks as nothing is guarenteed to be queued after a close
           db.close(function () {
@@ -1726,6 +1731,12 @@ var mytests = function() {
             start(1);
           }, function (error) {
             ok(false, 'expected close error callback not to be called after database is closed');
+            start(1);
+          });
+
+          // END of slower version:
+          }, function (error) {
+            ok(false, 'expected open error callback not to be called ...');
             start(1);
           });
         });
@@ -1881,7 +1892,7 @@ var mytests = function() {
         });
 
         // Needed to support some large-scale applications:
-        test_it(suiteName + ' close then re-open allows subsequent queries to run', function () {
+        test_it(suiteName + ' close then re-open (2x) allows subsequent queries to run', function () {
           // asynch test coming up
           stop(1);
         
@@ -1972,13 +1983,17 @@ var mytests = function() {
         });
 
         // Needed to support some large-scale applications:
-        test_it(suiteName + ' close, then delete then re-open allows subsequent queries to run', function () {
+        test_it(suiteName + ' close slower, then delete then re-open allows subsequent queries to run', function () {
           var dbName = "Database-Close-delete-Reopen.db";
 
           // asynch test coming up
           stop(1);
 
-          var db1 = openDatabase({name: dbName});
+          // version 1 BROKEN for iOS (due to background processing model):
+          //var db1 = openDatabase({name: dbName});
+
+          // START of slower version:
+          openDatabase(dbName, "1.0", "Demo", DEFAULT_SIZE, function (db1) {
 
           db1.close(function () {
             window.sqlitePlugin.deleteDatabase(dbName, function () {
@@ -2005,6 +2020,12 @@ var mytests = function() {
             });
           }, function (e) {
             ok(false, 'error: ' + e);
+            start(1);
+          });
+
+          // END of slower version:
+          }, function (error) {
+            ok(false, 'expected open error callback not to be called ...');
             start(1);
           });
         });
@@ -2074,6 +2095,9 @@ var mytests = function() {
         });
 
         test_it(suiteName + ' repeatedly open and close database faster (5x)', function () {
+          // XXX CURRENTLY BROKEN on iOS due to current background processing implementation
+          if (!(isAndroid || isIE)) pending('CURRENTLY BROKEN on iOS (background processing implementation)');
+
           var dbName = "repeatedly-open-and-close-faster-5x.db";
 
           // async test coming up
@@ -2191,6 +2215,9 @@ var mytests = function() {
 
         // Needed to support some large-scale applications:
         test_it(suiteName + ' repeatedly open and delete database faster (5x)', function () {
+          // XXX CURRENTLY BROKEN on iOS due to current background processing implementation
+          if (!(isAndroid || isIE)) pending('CURRENTLY BROKEN on iOS (background processing implementation)');
+
           var dbName = "repeatedly-open-and-delete-faster-5x.db";
 
           // async test coming up

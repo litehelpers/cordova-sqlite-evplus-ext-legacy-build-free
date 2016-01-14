@@ -11,7 +11,7 @@
     <keywords>sqlite</keywords>
 
     <description>Native interface to SQLite for PhoneGap/Cordova. Allows you to use more storage and provides more flexibility than the standard Web SQL database (window.openDatabase).</description>
-    <author>Litehelpers (various)</author>
+    <author>litehelpers (various)</author>
 
     <engines>
         <engine name="cordova" version=">=3.3.0" />
@@ -51,7 +51,6 @@
             </feature>
         </config-file>
 
-        <!-- Note: the ios src is based off src/ios implicitly -->
         <header-file src="src/ios/SQLitePlugin.h" />
         <source-file src="src/ios/SQLitePlugin.m" />
         <framework src="libsqlite3.dylib" />

@@ -2,7 +2,7 @@
 
 ## 0.8.0-evfree-ext-dev
 
-TBD
+- Support pre-populated database for Windows "Universal"
 
 ## 0.7.2-evfree-regexp-dev
 

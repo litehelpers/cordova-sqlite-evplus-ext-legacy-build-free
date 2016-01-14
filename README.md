@@ -44,7 +44,7 @@ I raised [Cordova bug CB-9830](https://issues.apache.org/jira/browse/CB-9830) to
 - Free support is available in ~~public locations such as~~ [litehelpers / Cordova-sqlite-enterprise-free / issues](https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues) ~~and https://gitter.im/litehelpers/Cordova-sqlite-storage~~; commercial support is available by contacting: info@litehelpers.net
 - Patches patches will *NOT* be accepted on this project due to potential licensing issues.
 - The following features are omitted from this version branch:
-  - Pre-populated database
+  - ~~Pre-populated database~~
   - WP(7/8)
 - Amazon Fire-OS is dropped due to lack of support by Cordova. Android version should be used to deploy to Fire-OS 5.0(+) devices ref: [cordova/cordova-discuss#32 (comment)](https://github.com/cordova/cordova-discuss/issues/32#issuecomment-167021676)
 - Windows "Universal" for Windows 8.0/8.1(+) and Windows Phone 8.1(+) version is in an alpha state:
@@ -62,6 +62,7 @@ I raised [Cordova bug CB-9830](https://issues.apache.org/jira/browse/CB-9830) to
 
 ## Announcements
 
+- Pre-populated database support for Android, iOS, ~~and Windows "Universal" (_broken_)~~, usage described below
 - REGEXP is now supported for Android and iOS platforms.
 - This version has the following improvement(s):
   - iOS version can now handle all UNICODE characters, using URI encoding as a workaround for [Cordova bug CB-9435](https://issues.apache.org/jira/browse/CB-9435).
@@ -85,6 +86,7 @@ I raised [Cordova bug CB-9830](https://issues.apache.org/jira/browse/CB-9830) to
 - As described in [this posting](http://brodyspark.blogspot.com/2012/12/cordovaphonegap-sqlite-plugins-offer.html):
   - Keeps sqlite database in a user data location that is known; can be reconfigured (iOS version); and synchronized to iCloud by default (iOS version; can be disabled as described below).
   - No 5MB maximum, more information at: http://www.sqlite.org/limits.html
+- Pre-populated openDatabase option (usage described below)
 
 ## Some apps using this plugin
 
@@ -96,13 +98,14 @@ TBD *your app here*
 
 - iOS version does not support certain rapidly repeated open-and-close or open-and-delete test scenarios due to how the implementation handles background processing
 - As described below, auto-vacuum is NOT enabled by default.
-- INSERT statement that affects multiple rows (due to SELECT cause or using TRIGGER(s), for example) does not report proper rowsAffected on Android in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled (using the `androidDatabaseImplementation` option in `window.sqlitePlugin.openDatabase`)
+- _Not in this version:_ ~~INSERT statement that affects multiple rows (due to SELECT cause or using TRIGGER(s), for example) does not report proper rowsAffected on Android in case [Android-sqlite-connector](https://github.com/liteglue/Android-sqlite-connector) is disabled (using the `androidDatabaseImplementation` option in `window.sqlitePlugin.openDatabase`)~~
 - Memory issue observed when adding a large number of records due to the JSON implementation which is improved in [litehelpers / Cordova-sqlite-enterprise-free](https://github.com/litehelpers/Cordova-sqlite-enterprise-free) (available with a different licensing scheme)
 - A stability issue was reported on the iOS version when in use together with [SockJS](http://sockjs.org/) client such as [pusher-js](https://github.com/pusher/pusher-js) at the same time (see [litehelpers/Cordova-sqlite-storage#196](https://github.com/litehelpers/Cordova-sqlite-storage/issues/196)). The workaround is to call sqlite functions and [SockJS](http://sockjs.org/) client functions in separate ticks (using setTimeout with 0 timeout).
 - If a sql statement fails for which there is no error handler or the error handler does not return `false` to signal transaction recovery, the plugin fires the remaining sql callbacks before aborting the transaction.
 - In case of an error, the error `code` member is bogus on Windows (fixed for Android in this version).
 - Possible crash on Android when using Unicode emoji characters due to [Android bug 81341](https://code.google.com/p/android/issues/detail?id=81341), which _should_ be fixed in Android 6.x
 - In-memory database `db=window.sqlitePlugin.openDatabase({name: ":memory:"})` is currently not supported.
+- _Pre-populated database is known to be BROKEN on Windows_
 - Close database bugs described below.
 - When a database is opened and deleted without closing, the iOS version is known to leak resources.
 - It is NOT possible to open multiple databases with the same name but in different locations (iOS version).
@@ -250,6 +253,30 @@ If any sql statements or transactions are attempted on a database object before 
 - The database file name should include the extension, if desired.
 - It is possible to open multiple database access objects for the same database.
 - The database access object can be closed as described below.
+
+### Pre-populated database(s)
+
+For Android, Amazon Fire-OS, iOS, and Windows "Universal": put the database file in the `www` directory and open the database like:
+
+```js
+var db = window.sqlitePlugin.openDatabase({name: "my.db", createFromLocation: 1});
+```
+
+or to disable iCloud backup:
+
+```js
+db = sqlitePlugin.openDatabase({name: "my.db", location: 2, createFromLocation: 1});
+```
+
+**IMPORTANT NOTES:**
+
+- Put the pre-populated database file in the `www` subdirectory. This should work well with using the Cordova CLI to support Android, iOS, and Windows "Universal" versions.
+- The pre-populated database file name must match **exactly** the file name given in `openDatabase`. This plugin does *not* use an automatic extension.
+- The pre-populated database file is ignored if the database file with the same name already exists in your database file location.
+
+**TIP:** If you don't see the data from the pre-populated database file, completely remove your app and try it again!
+
+**Alternative:** You can also use [an-rahulpandey / cordova-plugin-dbcopy](https://github.com/an-rahulpandey/cordova-plugin-dbcopy) to install a pre-populated database
 
 ## SQL transactions
 

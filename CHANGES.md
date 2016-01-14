@@ -2,6 +2,7 @@
 
 ## 0.7.2-evfree-regexp-dev
 
+- All iOS operations are now using background processing (reported to resolve intermittent problems with cordova-ios@4.0.1)
 - URI encoding workaround for Cordova BUG CB-9435 (iOS *only*)
 
 ## 0.7.1-evcommon-dev

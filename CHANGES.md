@@ -1,6 +1,6 @@
 # Changes
 
-## 0.8.2-rc
+## 0.8.2
 
 - Support pre-populated database for Android, iOS
 - BROKEN: pre-populated database for Windows "Universal"

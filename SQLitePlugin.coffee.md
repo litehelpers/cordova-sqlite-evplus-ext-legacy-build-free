@@ -707,7 +707,13 @@
 
 ## SQLite plugin object factory:
 
+    # OLD:
     dblocations = [ "docs", "libs", "nosync" ]
+
+    iosLocationMap =
+      'default' : 'nosync'
+      'Documents' : 'docs'
+      'Library' : 'libs'
 
     SQLiteFactory =
       ###
@@ -716,50 +722,113 @@
       If this function is edited in Javascript then someone will
       have to translate it back to CoffeeScript by hand.
       ###
-      opendb: argsArray (args) ->
-        if args.length < 1 then return null
+      openDatabase: argsArray (args) ->
+        if args.length < 1 || !args[0]
+          throw newSQLError 'Sorry missing mandatory open arguments object in openDatabase call'
 
-        first = args[0]
-        openargs = null
-        okcb = null
-        errorcb = null
+        #first = args[0]
+        #openargs = null
+        #okcb = null
+        #errorcb = null
 
-        if first.constructor == String
-          openargs = {name: first}
+        #if first.constructor == String
+        #  openargs = {name: first}
 
-          if args.length >= 5
-            okcb = args[4]
-            if args.length > 5 then errorcb = args[5]
+        #  if args.length >= 5
+        #    okcb = args[4]
+        #    if args.length > 5 then errorcb = args[5]
 
-        else
-          openargs = first
+        #else
+        #  openargs = first
 
-          if args.length >= 2
-            okcb = args[1]
-            if args.length > 2 then errorcb = args[2]
+        #  if args.length >= 2
+        #    okcb = args[1]
+        #    if args.length > 2 then errorcb = args[2]
 
-        dblocation = if !!openargs.location then dblocations[openargs.location] else null
-        openargs.dblocation = dblocation || dblocations[0]
+        if args[0].constructor == String
+          throw newSQLError 'Sorry first openDatabase argument must be an object'
+
+        openargs = args[0]
+
+        # check here
+        if !openargs.name
+          throw newSQLError 'Database name value is missing in openDatabase call'
+
+        if !openargs.iosDatabaseLocation and !openargs.location and openargs.location isnt 0
+          throw newSQLError 'Database location or iosDatabaseLocation value is now mandatory in openDatabase call'
+
+        if !!openargs.location and !!openargs.iosDatabaseLocation
+          throw newSQLError 'Ambiguous: both location or iosDatabaseLocation values are present in openDatabase call'
+
+        dblocation =
+          if !!openargs.location and openargs.location is 'default'
+            iosLocationMap['default']
+          else if !!openargs.iosDatabaseLocation
+            iosLocationMap[openargs.iosDatabaseLocation]
+          else
+            dblocations[openargs.location]
+
+        if !dblocation
+          throw newSQLError 'Valid iOS database location could not be determined in openDatabase call'
+
+        openargs.dblocation = dblocation
 
         if !!openargs.createFromLocation and openargs.createFromLocation == 1
           openargs.createFromResource = "1"
 
+        if !!openargs.androidDatabaseImplementation and openargs.androidDatabaseImplementation == 2
+          openargs.androidOldDatabaseImplementation = 1
+
+        if !!openargs.androidLockWorkaround and openargs.androidLockWorkaround == 1
+          openargs.androidBugWorkaround = 1
+
+        okcb = null
+        errorcb = null
+        if args.length >= 2
+          okcb = args[1]
+          if args.length > 2 then errorcb = args[2]
+
         new SQLitePlugin openargs, okcb, errorcb
 
-      deleteDb: (first, success, error) ->
+      deleteDatabase: (first, success, error) ->
         args = {}
 
         if first.constructor == String
           #console.log "delete db name: #{first}"
-          args.path = first
-          args.dblocation = dblocations[0]
+          #args.path = first
+          #args.dblocation = dblocations[0]
+          throw newSQLError 'Sorry first deleteDatabase argument must be an object'
 
         else
           #console.log "delete db args: #{JSON.stringify first}"
           if !(first and first['name']) then throw new Error "Please specify db name"
-          args.path = first.name
-          dblocation = if !!first.location then dblocations[first.location] else null
-          args.dblocation = dblocation || dblocations[0]
+          dbname = first.name
+
+          if typeof dbname != 'string'
+            throw newSQLError 'delete database name must be a string'
+
+          args.path = dbname
+          #dblocation = if !!first.location then dblocations[first.location] else null
+          #args.dblocation = dblocation || dblocations[0]
+
+        if !first.iosDatabaseLocation and !first.location and first.location isnt 0
+          throw newSQLError 'Database location or iosDatabaseLocation value is now mandatory in deleteDatabase call'
+
+        if !!first.location and !!first.iosDatabaseLocation
+          throw newSQLError 'Ambiguous: both location or iosDatabaseLocation values are present in deleteDatabase call'
+
+        dblocation =
+          if !!first.location and first.location is 'default'
+            iosLocationMap['default']
+          else if !!first.iosDatabaseLocation
+            iosLocationMap[first.iosDatabaseLocation]
+          else
+            dblocations[first.location]
+
+        if !dblocation
+          throw newSQLError 'Valid iOS database location could not be determined in deleteDatabase call'
+
+        args.dblocation = dblocation
 
         # XXX [BUG #210] TODO: when closing or deleting a db, abort any pending transactions (with error callback)
         delete SQLitePlugin::openDBs[args.path]
@@ -771,8 +840,8 @@
       sqliteFeatures:
         isSQLitePlugin: true
 
-      openDatabase: SQLiteFactory.opendb
-      deleteDatabase: SQLiteFactory.deleteDb
+      openDatabase: SQLiteFactory.openDatabase
+      deleteDatabase: SQLiteFactory.deleteDatabase
 
 ## vim directives
 

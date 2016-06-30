@@ -1,13 +1,13 @@
 {
-  "name": "cordova-sqlite-evfree",
-  "version": "0.8.3-pre1",
-  "description": "Native interface to SQLite for PhoneGap/Cordova - free enterprise version with memory improvements and other enhancements",
+  "name": "cordova-sqlite-evplus-legacy-free",
+  "version": "0.8.3",
+  "description": "Native interface to SQLite for PhoneGap/Cordova - premium enterprise version with legacy support for memory improvements and other enhancements",
   "cordova": {
-    "id": "cordova-sqlite-evfree",
+    "id": "cordova-sqlite-evplus-legacy-free",
     "platforms": [
       "android",
       "ios",
-      "windows",
+      "windows"
     ]
   },
   "repository": {
@@ -19,13 +19,7 @@
     "ecosystem:cordova",
     "cordova-android",
     "cordova-ios",
-    "cordova-windows",
-  ],
-  "engines": [
-    {
-      "name": "cordova",
-      "version": ">=3.3.0"
-    }
+    "cordova-windows"
   ],
   "author": "various",
   "license": "GPL",

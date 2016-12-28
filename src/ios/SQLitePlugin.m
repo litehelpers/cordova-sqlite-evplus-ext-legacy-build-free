@@ -215,7 +215,9 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
 }
 
 -(void) createFromResource: (NSString *)dbfile withDbname:(NSString *)dbname {
+    // IMPLEMENTATION based on various sources:
     NSString * bundleRoot = [[NSBundle mainBundle] resourcePath];
+
     NSString * www = [bundleRoot stringByAppendingPathComponent:@"www"];
     NSString * prepopulatedDb = [www stringByAppendingPathComponent: dbfile];
     // NSLog(@"Look for pre-populated DB at: %@", prepopulatedDb);

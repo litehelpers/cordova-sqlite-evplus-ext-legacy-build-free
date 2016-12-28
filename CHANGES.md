@@ -1,6 +1,6 @@
 # Changes
 
-## cordova-sqlite-evplus-legacy-free 0.9.0-pre01
+## cordova-sqlite-evplus-legacy-free 0.9.0-pre02
 
 - macOS ("osx") support
 

@@ -233,6 +233,7 @@ public class SQLitePlugin extends CordovaPlugin {
      */
     private void createFromResource(String myDBName, File dbfile)
     {
+        // IMPLEMENTATION based on various sources:
         InputStream in = null;
         OutputStream out = null;
 

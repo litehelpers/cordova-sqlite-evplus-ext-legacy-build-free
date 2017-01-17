@@ -1,7 +1,8 @@
 # Changes
 
-## cordova-sqlite-evplus-legacy-free 0.9.0-pre02
+## cordova-sqlite-evplus-legacy-free 0.9.0-pre03
 
+- Signal error in case of a failure opening the database file (iOS/macOS)
 - macOS ("osx") support
 
 ## 0.8.3

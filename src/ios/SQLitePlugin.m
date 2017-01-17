@@ -179,6 +179,7 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
 
             if (sqlite3_open(name, &db) != SQLITE_OK) {
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to open DB"];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId: command.callbackId];
                 return;
             } else {
                 sqlite3_create_function(db, "REGEXP", 2, SQLITE_ANY, NULL, &sqlite_regexp, NULL, NULL);

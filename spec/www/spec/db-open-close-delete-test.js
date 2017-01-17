@@ -161,8 +161,6 @@ var mytests = function() {
         }, MYTIMEOUT);
 
         it(suiteName + 'Open database WITH SLASH (/) REPORTS ERROR (all supported platforms Android/iOS/macOS/Windows)', function(done) {
-          if (!isAndroid && !isWindows) pending('SKIP for iOS/macOS'); // TBD
-
           var dbName = "first/second.db";
 
           try {

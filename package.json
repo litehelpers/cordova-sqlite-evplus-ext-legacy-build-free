@@ -1,6 +1,6 @@
 {
   "name": "cordova-sqlite-evplus-legacy-free",
-  "version": "0.9.0-pre04",
+  "version": "0.9.0-pre05",
   "description": "Native interface to SQLite for PhoneGap/Cordova - premium enterprise version with legacy support for memory improvements and other enhancements",
   "cordova": {
     "id": "cordova-sqlite-evplus-legacy-free",

@@ -12,6 +12,8 @@
 
 #include <regex.h>
 
+#import "PSPDFThreadSafeMutableDictionary.h"
+
 // NOTE: This is now broken by cordova-ios 4.0, see:
 // https://issues.apache.org/jira/browse/CB-9638
 // Solution is to use NSJSONSerialization instead.
@@ -60,7 +62,7 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
     NSLog(@"Initializing SQLitePlugin");
 
     {
-        openDBs = [NSMutableDictionary dictionaryWithCapacity:0];
+        openDBs = [PSPDFThreadSafeMutableDictionary dictionaryWithCapacity:0];
         appDBPaths = [NSMutableDictionary dictionaryWithCapacity:0];
 #if !__has_feature(objc_arc)
         [openDBs retain];

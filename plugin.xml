@@ -2,7 +2,7 @@
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-sqlite-evplus-legacy-free"
-    version="0.9.0-pre04">
+    version="0.9.0-pre05">
 
     <name>Cordova sqlite storage - premium enterprise version with legacy support for internal memory improvements and other enhancements</name>
 
@@ -54,6 +54,10 @@
 
         <header-file src="src/ios/SQLitePlugin.h" />
         <source-file src="src/ios/SQLitePlugin.m" />
+
+        <header-file src="src/ios/PSPDFThreadSafeMutableDictionary.h" />
+        <source-file src="src/ios/PSPDFThreadSafeMutableDictionary.m" />
+
         <framework src="libsqlite3.dylib" />
 
     </platform>
@@ -67,6 +71,9 @@
 
         <header-file src="src/ios/SQLitePlugin.h" />
         <source-file src="src/ios/SQLitePlugin.m" />
+
+        <header-file src="src/ios/PSPDFThreadSafeMutableDictionary.h" />
+        <source-file src="src/ios/PSPDFThreadSafeMutableDictionary.m" />
 
         <framework src="libsqlite3.dylib" />
     </platform>

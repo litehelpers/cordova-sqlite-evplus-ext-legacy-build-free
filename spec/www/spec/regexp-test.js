@@ -4,14 +4,16 @@ var MYTIMEOUT = 12000;
 
 var DEFAULT_SIZE = 5000000; // max to avoid popup in safari/ios
 
-var isAndroid = /Android/.test(navigator.userAgent);
-var isWindows = /Windows /.test(navigator.userAgent); // Windows (8.1)
+// Detect actual platform:
+var isWP8 = /IEMobile/.test(navigator.userAgent); // Matches WP(7/8/8.1)
+var isWindows = /Windows /.test(navigator.userAgent); // Windows
+var isAndroidUA = /Android/.test(navigator.userAgent);
+var isAndroid = (isAndroidUA && !isWindows);
 
-var scenarioList = [ isAndroid ? 'Plugin-sqlite-connector' : 'Plugin', 'HTML5', 'Plugin-android.database' ];
+var scenarioList = [ isAndroid ? 'Plugin-implementation-default' : 'Plugin', 'HTML5', 'Plugin-implementation-2' ];
 
-var scenarioCount = isAndroid ? 3 : (isIE ? 1 : 2);
+var scenarioCount = (!!window.hasWebKitBrowser) ? (isAndroid ? 3 : 2) : 1;
 
-// simple tests:
 var mytests = function() {
 
   for (var i=0; i<scenarioCount; ++i) {
@@ -20,26 +22,29 @@ var mytests = function() {
       var scenarioName = scenarioList[i];
       var suiteName = scenarioName + ': ';
       var isWebSql = (i === 1);
-      var isOldImpl = (i === 2);
+      var isImpl2 = (i === 2);
 
       // NOTE: MUST be defined in function scope, NOT outer scope:
       var openDatabase = function(name, ignored1, ignored2, ignored3) {
-        if (isOldImpl) {
-          return window.sqlitePlugin.openDatabase({name: name, androidDatabaseImplementation: 2});
+        if (isImpl2) {
+          // explicit database location:
+          return window.sqlitePlugin.openDatabase({name: name, location: 'default', androidDatabaseImplementation: 2});
         }
         if (isWebSql) {
           return window.openDatabase(name, "1.0", "Demo", DEFAULT_SIZE);
         } else {
-          return window.sqlitePlugin.openDatabase(name, "1.0", "Demo", DEFAULT_SIZE);
+          // explicit database location:
+          return window.sqlitePlugin.openDatabase({name: name, location: 'default'});
         }
       }
 
       it(suiteName + 'Simple REGEXP test',
         function(done) {
-          if (isWebSql && !isAndroid) pending('BROKEN for iOS Web SQL');
-          // FIXED:
-          //if (!isWebSql && isAndroid && !isOldImpl) pending('BROKEN for default Android implementation');
-          if (isWindows) pending('BROKEN for Windows ("Universal")');
+          if (isWP8) pending('NOT IMPLEMENTED for WP8 (plugin)');
+          if (isWindows) pending('NOT IMPLEMENTED for Windows (plugin)');
+          if (!isWebSql && !isWindows && isAndroid) pending('SKIP for Android plugin'); // TBD SKIP for Android plugin (for now)
+          if (isWebSql && !isAndroid && !isWindows && !isWP8) pending('SKIP for iOS (WebKit) Web SQL');
+          // IMPLEMENTED for iOS/macOS plugin in this version branch
 
           var db = openDatabase('simple-regexp-test.db', '1.0', 'test', DEFAULT_SIZE);
 

@@ -1,36 +1,33 @@
 {
-  "name": "cordova-sqlite-evfree-ext-dev",
-  "version": "0.8.0-evfree-ext-dev",
-  "description": "Native interface to SQLite for PhoneGap/Cordova enterprise (evfree-ext-src version branch) with Android memory fix",
+  "name": "cordova-sqlite-evplus-ext-common-legacy-free",
+  "version": "0.1.0",
+  "description": "Native interface to SQLite for PhoneGap/Cordova - evplus ext-common legacy enterprise version branch",
   "cordova": {
-    "id": "cordova-sqlite-evfree-ext-dev",
+    "id": "cordova-sqlite-evplus-ext-common-legacy-free",
     "platforms": [
       "android",
       "ios",
-      "windows",
+      "windows"
     ]
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/litehelpers/Cordova-sqlite-enterprise-free.git"
+    "url": "https://github.com/litehelpers/cordova-sqlite-evplus-ext-legacy-build-free.git"
   },
   "keywords": [
     "sqlite",
     "ecosystem:cordova",
     "cordova-android",
     "cordova-ios",
-    "cordova-windows",
-  ],
-  "engines": [
-    {
-      "name": "cordova",
-      "version": ">=3.3.0"
-    }
+    "cordova-windows"
   ],
   "author": "various",
   "license": "GPL",
   "bugs": {
-    "url": "https://github.com/litehelpers/Cordova-sqlite-enterprise-free/issues"
+    "url": "https://github.com/litehelpers/cordova-sqlite-evplus-ext-legacy-build-free/issues"
   },
-  "homepage": "https://github.com/litehelpers/Cordova-sqlite-enterprise-free"
+  "homepage": "https://github.com/litehelpers/cordova-sqlite-evplus-ext-legacy-build-free",
+  "dependencies": {
+    "cordova-sqlite-storage-dependencies": "1.0.0"
+  }
 }

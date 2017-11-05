@@ -10,23 +10,24 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)..\..\..\..\node_modules\cordova-sqlite-storage-dependencies</AdditionalIncludeDirectories>
+      <AdditionalOptions>/DSQLITE_THREADSAFE=1 /DSQLITE_DEFAULT_MEMSTATUS=0 /DSQLITE_OMIT_DECLTYPE /DSQLITE_OMIT_DEPRECATED /DSQLITE_OMIT_PROGRESS_CALLBACK /DSQLITE_OMIT_SHARED_CACHE /DSQLITE_TEMP_STORE=2 /DSQLITE_OMIT_LOAD_EXTENSION /DSQLITE_ENABLE_FTS3 /DSQLITE_ENABLE_FTS3_PARENTHESIS /DSQLITE_ENABLE_FTS4 /DSQLITE_ENABLE_RTREE /DSQLITE_DEFAULT_PAGE_SIZE=1024 /DSQLITE_OS_WINRT %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\external\sqlite3.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\..\node_modules\cordova-sqlite-storage-dependencies\sqlite3.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Database.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Statement.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\external\sqlite3.c">
-      <CompileAsWinRT>false</CompileAsWinRT>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Constants.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Database.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Statement.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\..\node_modules\cordova-sqlite-storage-dependencies\sqlite3.c">
+      <CompileAsWinRT>false</CompileAsWinRT>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

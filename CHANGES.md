@@ -1,7 +1,8 @@
 # Changes
 
-## cordova-sqlite-evplus-legacy-free 0.9.0-pre03
+## cordova-sqlite-evplus-legacy-free 0.9.0-pre04
 
+- Resolve Java 6/7/8 concurrent map compatibility issue reported in litehelpers/Cordova-sqlite-storage#726, THANKS to pointer by @NeoLSN (Jason Yang/楊朝傑) in litehelpers/Cordova-sqlite-storage#727.
 - Signal error in case of a failure opening the database file (iOS/macOS)
 - macOS ("osx") support
 

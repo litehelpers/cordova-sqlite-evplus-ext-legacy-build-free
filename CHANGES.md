@@ -1,5 +1,9 @@
 # Changes
 
+## cordova-sqlite-evplus-legacy-free 0.9.0-pre01
+
+- macOS ("osx") support
+
 ## 0.8.3
 
 - Fix sqlitePlugin.openDatabase and sqlitePlugin.deleteDatabase to check location/iosDatabaseLocation values

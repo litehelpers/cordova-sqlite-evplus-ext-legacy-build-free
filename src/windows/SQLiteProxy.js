@@ -25,7 +25,8 @@ module.exports = {
 	    var res;
 
 		function openImmediate(dbname) {
-			//var dbname = options.name;
+			if (!!dbmap[dbname]) throw new Error("CANNOT REOPEN DATABASE");
+
 			// from @EionRobb / phonegap-win8-sqlite:
 			var opendbname = Windows.Storage.ApplicationData.current.localFolder.path + "\\" + dbname;
 			console.log("open db name: " + dbname + " at full path: " + opendbname);

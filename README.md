@@ -43,7 +43,7 @@ Use the `location` or `iosDatabaseLocation` option in `sqlitePlugin.openDatabase
 
 ## Status
 
-- Multi-page apps are NOT supported by this plugin version and known to be broken on iOS/macOS as reported in [litehelpers / cordova-sqlite-evplus-ext-legacy-build-free#5](https://github.com/litehelpers/cordova-sqlite-evplus-ext-legacy-build-free/issues/5). Multi-page apps on Android/Windows may suffer from data loss risk discussed in [Cordova-sqlite-storage BUG 666](https://github.com/litehelpers/Cordova-sqlite-storage/issues/666). FUTURE TBD workaround solution may be applied to this plugin version (someday).
+- Multi-page apps are NOT supported by this plugin version and will not work on any platform ref: [litehelpers / cordova-sqlite-evplus-ext-legacy-build-free#5](https://github.com/litehelpers/cordova-sqlite-evplus-ext-legacy-build-free/issues/5). FUTURE TBD may be supported in this plugin version with workaround solution to [Cordova-sqlite-storage BUG 666](https://github.com/litehelpers/Cordova-sqlite-storage/issues/666) (someday).
 - cordova-android@7 is NOT supported, recommended to use cordova-android@6 instead
 - cordova-windows@5 is NOT supported, recommended to use cordova-windows@4 instead
 - The iOS database location is now mandatory, as documented below.

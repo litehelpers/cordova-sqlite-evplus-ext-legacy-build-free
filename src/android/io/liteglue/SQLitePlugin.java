@@ -192,12 +192,8 @@ public class SQLitePlugin extends CordovaPlugin {
         // If we re-use the existing DBRunner it might be in the process of closing...
         DBRunner r = dbrmap.get(dbname);
 
-        // Brody TODO: It may be better to terminate the existing db thread here & start a new one, instead.
         if (r != null) {
-            // don't orphan the existing thread; just re-open the existing database.
-            // In the worst case it might be in the process of closing, but even that's less serious
-            // than orphaning the old DBRunner.
-            cbc.success("a1"); // Indicate Android version with flat JSON interface
+            cbc.error("CANNOT REOPEN DATABASE");
         } else {
             r = new DBRunner(dbname, options, cbc);
             dbrmap.put(dbname, r);

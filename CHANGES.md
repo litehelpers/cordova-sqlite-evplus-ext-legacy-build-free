@@ -1,7 +1,8 @@
 # Changes
 
-## cordova-sqlite-evplus-legacy-free 0.9.0-pre05
+## cordova-sqlite-evplus-legacy-free 0.9.0
 
+- Do not reopen database for multi-page apps on any platform (avoid data loss risk discussed in litehelpers/Cordova-sqlite-storage#666)
 - Use PSPDFThreadSafeMutableDictionary for iOS/macOS to avoid threading issue ref: litehelpers/Cordova-sqlite-storage#716
 - Resolve Java 6/7/8 concurrent map compatibility issue reported in litehelpers/Cordova-sqlite-storage#726, THANKS to pointer by @NeoLSN (Jason Yang/楊朝傑) in litehelpers/Cordova-sqlite-storage#727.
 - Signal error in case of a failure opening the database file (iOS/macOS)

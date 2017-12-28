@@ -164,8 +164,10 @@ sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values) {
         NSValue *dbPointer = [openDBs objectForKey:dbfilename];
 
         if (dbPointer != NULL) {
-            NSLog(@"Reusing existing database connection for db name %@", dbfilename);
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Database opened"];
+            NSLog(@"CANNOT REOPEN DATABASE NAME %@", dbfilename);
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"CANNOT REOPEN DATABASE"];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId: command.callbackId];
+            return;
         } else {
             const char *name = [dbname UTF8String];
             sqlite3 *db;

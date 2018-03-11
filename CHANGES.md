@@ -1,5 +1,9 @@
 # Changes
 
+## cordova-sqlite-evplus-legacy-free 0.9.1
+
+- cordova-sqlite-evplus-legacy-free with SQLite (3.10.8.2) build with SQLITE_THREADSAFE=1 for iOS/macOS ref: litehelpers/Cordova-sqlite-storage#754 (<https://github.com/litehelpers/Cordova-sqlite-storage/issues/754>)
+
 ## cordova-sqlite-evplus-legacy-free 0.9.0
 
 - Do not reopen database for multi-page apps on any platform (avoid data loss risk discussed in litehelpers/Cordova-sqlite-storage#666)
